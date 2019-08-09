@@ -13,27 +13,28 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 @SpringBootApplication
 public class RecognizerApplication {
 
-	private static Logger logger = LoggerFactory.getLogger(RecognizerApplication.class);
+    private static Logger logger = LoggerFactory.getLogger(RecognizerApplication.class);
 
-	public static void main(String[] args) {
-		logger.info("Start app...");
-		ApiContextInitializer.init();
-		SpringApplication.run(RecognizerApplication.class, args);
-		logger.info("app init");
-	}
+    public static void main(String[] args) {
+        logger.info("Start app...");
+        ApiContextInitializer.init();
+        SpringApplication.run(RecognizerApplication.class, args);
+        logger.info("app init");
+    }
 
-	@Bean
-	TelegramBotsApi telegramBotsApi(RecognizerBot recognizerBot) throws TelegramApiRequestException {
-		logger.info("Start bot init");
-		TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-		telegramBotsApi.registerBot(recognizerBot);
-		logger.info("Bot registered");
-		return telegramBotsApi;
-	}
+    @Bean
+    TelegramBotsApi telegramBotsApi(RecognizerBot recognizerBot) throws TelegramApiRequestException {
+        logger.info("Start bot init");
+        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
+        telegramBotsApi.registerBot(recognizerBot);
+        logger.info("Bot registered");
+        return telegramBotsApi;
+    }
 
-	@Bean
-	public RestTemplate restTemplate() {
-		return new RestTemplate();
-	}
-
+    @Bean
+    public RestTemplate restTemplate() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setErrorHandler(new ErrorHandler());
+        return restTemplate;
+    }
 }

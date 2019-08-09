@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -26,24 +27,24 @@ public class SpeechkitService {
     private final String urlSynthesize;
     private final String urlRecognize;
     private final String folderId;
-    private final AimToken aimToken;
+    private final AimTokenService aimTokenService;
 
     @Autowired
     public SpeechkitService(RestTemplate restTemplate,
                             @Value("${urlSynthesize}") String urlSynthesize,
                             @Value("${urlRecognize}") String urlRecognize,
-                            @Value("${folderId}") String folderId, AimToken aimToken) {
+                            @Value("${folderId}") String folderId, AimTokenService aimTokenService) {
         this.restTemplate = restTemplate;
         this.urlSynthesize = urlSynthesize;
         this.urlRecognize = urlRecognize;
         this.folderId = folderId;
-        this.aimToken = aimToken;
+        this.aimTokenService = aimTokenService;
     }
 
     public byte[] synthesize(String text) throws IOException {
-        logger.trace("Start synthesize");
+        logger.info("Start synthesize");
 
-        String iamToken = aimToken.getIamToken(); // Укажите IAM-токен.
+        String iamToken = aimTokenService.getIamToken(); // Укажите IAM-токен.
 
         String lang = "ru-RU";
 
@@ -57,6 +58,10 @@ public class SpeechkitService {
         HttpEntity entity = new HttpEntity(headers);
 
         ResponseEntity<byte[]> responce = restTemplate.postForEntity(urlSynthesize + query, entity, byte[].class);
+        if (responce.getStatusCodeValue() != 200) {
+            logger.error("Bad response {}, {}", responce.getStatusCode(), responce.toString());
+            return null;
+        }
         File saveFile = new File(UUID.randomUUID().toString() + ".ogg");
         FileUtils.writeByteArrayToFile(saveFile, Objects.requireNonNull(responce.getBody()));
 
@@ -66,11 +71,14 @@ public class SpeechkitService {
 
 
     public String recognize(File file) throws IOException {
-        logger.trace("Start recognize");
+        logger.info("Start recognize");
 
         byte[] bytes = FileUtils.readFileToByteArray(file);
 
-        String iamToken = aimToken.getIamToken(); // Укажите IAM-токен.
+        String iamToken = aimTokenService.getIamToken(); // Укажите IAM-токен.
+        if (StringUtils.isEmpty(iamToken)) {
+            logger.error("iam token is empty");
+        }
         String lang = "ru-RU";
 
         String query = String.format("topic=%s&lang=%s&folderId=%s",
@@ -82,10 +90,13 @@ public class SpeechkitService {
         headers.setBearerAuth(iamToken);
         HttpEntity entity = new HttpEntity<>(bytes, headers);
         ResponseEntity<MsgDto> response = restTemplate.postForEntity(urlRecognize + query, entity, MsgDto.class);
+        if (response.getStatusCodeValue() != 200) {
+            logger.error("Bad response {}, {}", response.getStatusCode(), response.toString());
+            return null;
+        }
 
         MsgDto msg = response.getBody();
-        logger.trace("Finish recognize {}", msg);
-        return msg!= null ? msg.getResult() : null;
-
+        logger.info("Finish recognize {}", msg != null ? msg.getResult() : null);
+        return msg != null ? msg.getResult() : null;
     }
 }

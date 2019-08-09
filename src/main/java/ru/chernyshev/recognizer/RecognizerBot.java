@@ -28,15 +28,15 @@ public class RecognizerBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        logger.trace("Received {}", update);
+        logger.info("Received {}", update);
 
         Voice voice = update.getMessage().getVoice();
         Long chatId = update.getMessage().getChatId();
         if (voice != null) {
-            logger.trace("Message has voice");
+            logger.info("Message has voice");
             File voiceFile = executeFile(voice);
             if (voiceFile == null) {
-                logger.trace("Message has voice");
+                logger.info("Message has voice");
                 return;
             }
             String text;
