@@ -3,6 +3,7 @@ package ru.chernyshev.recognizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -20,10 +21,16 @@ public class RecognizerBot extends TelegramLongPollingBot {
     private static Logger logger = LoggerFactory.getLogger(RecognizerBot.class);
 
     private final SpeechkitService speechkitService;
+    private final String botToken;
+    private final String botUsername;
 
     @Autowired
-    public RecognizerBot(SpeechkitService speechkitService) {
+    public RecognizerBot(SpeechkitService speechkitService,
+                         @Value("${botToken}") String botToken,
+                         @Value("${botUsername}") String botUsername) {
         this.speechkitService = speechkitService;
+        this.botToken = botToken;
+        this.botUsername = botUsername;
     }
 
     @Override
@@ -79,11 +86,11 @@ public class RecognizerBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "RecTestBot";
+        return botUsername;
     }
 
     @Override
     public String getBotToken() {
-        return "709753729:AAEmCZ0_DoZuMHRMYykXvPl7DVZtYt-nYVA";
+        return botToken;
     }
 }
