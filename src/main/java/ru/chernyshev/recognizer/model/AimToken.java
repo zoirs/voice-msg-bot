@@ -1,4 +1,4 @@
-package ru.chernyshev.recognizer;
+package ru.chernyshev.recognizer.model;
 
 import org.springframework.util.StringUtils;
 

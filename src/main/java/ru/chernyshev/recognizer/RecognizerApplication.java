@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import ru.chernyshev.recognizer.service.RecognizerBotService;
 
 @SpringBootApplication
 public class RecognizerApplication {
@@ -23,10 +24,10 @@ public class RecognizerApplication {
     }
 
     @Bean
-    TelegramBotsApi telegramBotsApi(RecognizerBot recognizerBot) throws TelegramApiRequestException {
+    TelegramBotsApi telegramBotsApi(RecognizerBotService recognizerBotService) throws TelegramApiRequestException {
         logger.info("Start bot init");
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-        telegramBotsApi.registerBot(recognizerBot);
+        telegramBotsApi.registerBot(recognizerBotService);
         logger.info("Bot registered");
         return telegramBotsApi;
     }

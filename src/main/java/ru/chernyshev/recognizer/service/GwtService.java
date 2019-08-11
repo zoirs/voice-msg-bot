@@ -1,4 +1,4 @@
-package ru.chernyshev.recognizer;
+package ru.chernyshev.recognizer.service;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import ru.chernyshev.recognizer.service.AimTokenService;
 
 import java.io.File;
 import java.io.FileReader;

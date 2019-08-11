@@ -1,4 +1,4 @@
-package ru.chernyshev.recognizer;
+package ru.chernyshev.recognizer.service;
 
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import ru.chernyshev.recognizer.model.AimToken;
 
 @Component
 public class AimTokenService {

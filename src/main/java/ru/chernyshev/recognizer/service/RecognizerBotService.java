@@ -1,10 +1,11 @@
-package ru.chernyshev.recognizer;
+package ru.chernyshev.recognizer.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -14,20 +15,23 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 @Component
-public class RecognizerBot extends TelegramLongPollingBot {
+public class RecognizerBotService extends TelegramLongPollingBot {
 
-    private static Logger logger = LoggerFactory.getLogger(RecognizerBot.class);
+    private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
+    private static Integer ONE_MEGABYTE = 1024 * 1024;
+    private static Integer ONE_MINUTE = 60;
 
     private final SpeechkitService speechkitService;
     private final String botToken;
     private final String botUsername;
 
     @Autowired
-    public RecognizerBot(SpeechkitService speechkitService,
-                         @Value("${botToken}") String botToken,
-                         @Value("${botUsername}") String botUsername) {
+    public RecognizerBotService(SpeechkitService speechkitService,
+                                @Value("${botToken}") String botToken,
+                                @Value("${botUsername}") String botUsername) {
         this.speechkitService = speechkitService;
         this.botToken = botToken;
         this.botUsername = botUsername;
@@ -35,15 +39,26 @@ public class RecognizerBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        logger.info("Received {}", update);
+        logger.trace("Received {}", update);
 
         Voice voice = update.getMessage().getVoice();
         Long chatId = update.getMessage().getChatId();
         if (voice != null) {
-            logger.info("Message has voice");
+            logger.info("Message has voice {}", voice.toString());//байт , sec
+            if (voice.getDuration() > ONE_MINUTE) {
+                logger.info("Message too long: {}", voice.getDuration());
+                sendMsg(chatId, "Вам недоступны сообщения длительностью более 1 минуты");
+                return;
+            }
+            if (voice.getFileSize() > ONE_MEGABYTE) {
+                logger.warn("Message too big: {}", voice.getFileSize());
+                sendMsg(chatId, "Вам недоступны объемные сообщения");
+                return;
+            }
+
             File voiceFile = executeFile(voice);
             if (voiceFile == null) {
-                logger.info("Message has voice");
+                logger.warn("No voice");
                 return;
             }
             String text;
@@ -53,6 +68,8 @@ public class RecognizerBot extends TelegramLongPollingBot {
                 logger.error("Cant recognize message", e);
                 sendMsg(chatId, "Не могу распознать сообщение");
                 return;
+            } finally {
+                deleteFile(voiceFile);
             }
             sendMsg(chatId, text);
         } else if (update.hasMessage() && update.getMessage().hasText()) {
@@ -60,7 +77,23 @@ public class RecognizerBot extends TelegramLongPollingBot {
         }
     }
 
+    private void deleteFile(File voiceFile) {
+        try {
+            Files.deleteIfExists(voiceFile.toPath());
+        } catch (IOException e) {
+            logger.warn("Cant delete file {}", voiceFile);
+        }
+    }
+
     private void sendMsg(Long chatId, String text) {
+        if (StringUtils.isEmpty(text)) {
+            logger.error("Cant send message empty msg");
+            return;
+        }
+        if (chatId == null) {
+            logger.error("Unknown chat id");
+            return;
+        }
         SendMessage message = new SendMessage() // Create a SendMessage object with mandatory fields
                 .setChatId(chatId)
                 .setText(text);
