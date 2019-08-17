@@ -9,13 +9,13 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "MESSAGES")
-public class Message extends AbstractTimestampEntity{
+public class Message extends AbstractTimestampEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE,
-            generator="messages_seq")
-    @SequenceGenerator(name="messages_seq",
-            sequenceName="SEQ_MESSAGES", allocationSize=10)
+            generator="SEQ_MESSAGES")
+    @SequenceGenerator(name="SEQ_MESSAGES",
+            sequenceName="SEQ_MESSAGES", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -24,11 +24,11 @@ public class Message extends AbstractTimestampEntity{
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private MessageResult result;
+    private MessageResult result = MessageResult.PREPARE;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private MessageType messageType;
+    private MessageType messageType = MessageType.UNKNOWN;
 
     public MessageResult getResult() {
         return result;

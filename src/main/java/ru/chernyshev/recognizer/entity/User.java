@@ -11,9 +11,9 @@ public class User extends AbstractTimestampEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE,
-            generator = "users_seq")
-    @SequenceGenerator(name = "users_seq",
-            sequenceName = "SEQ_USER", allocationSize = 10)
+            generator = "seq_user")
+    @SequenceGenerator(name = "seq_user",
+            sequenceName = "seq_user", allocationSize = 1)
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -25,7 +25,6 @@ public class User extends AbstractTimestampEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private UserStatus state;
-
 
     @OneToMany(mappedBy = "user")
     private List<Message> userMessages;
