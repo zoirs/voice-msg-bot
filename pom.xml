@@ -40,25 +40,46 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.6</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt</artifactId>
 			<version>0.9.1</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15 -->
+
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk15</artifactId>
 			<version>1.46</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+			<version>3.6.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.2.6</version>
+		</dependency>
+
+		<!--<dependency>-->
+			<!--<groupId>org.liquibase</groupId>-->
+			<!--<artifactId>liquibase-maven-plugin</artifactId>-->
+			<!--<version>3.4.1</version>-->
+		<!--</dependency>-->
 
 	</dependencies>
 
@@ -71,6 +92,16 @@
 					<executable>true</executable>
 				</configuration>
 			</plugin>
+
+			<!--<plugin>-->
+				<!--<groupId>org.liquibase</groupId>-->
+				<!--<artifactId>liquibase-maven-plugin</artifactId>-->
+				<!--<version>3.4.1</version>-->
+				<!--<configuration>-->
+					<!--<propertyFile>src/main/resources/liquibase.properties</propertyFile>-->
+				<!--</configuration>-->
+			<!--</plugin>-->
+
 		</plugins>
 	</build>
 

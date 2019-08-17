@@ -12,6 +12,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.chernyshev.recognizer.entity.Message;
+import ru.chernyshev.recognizer.entity.User;
+import ru.chernyshev.recognizer.model.MessageResult;
+import ru.chernyshev.recognizer.model.MessageType;
+import ru.chernyshev.recognizer.model.UserStatus;
+import ru.chernyshev.recognizer.repository.MessageRepository;
+import ru.chernyshev.recognizer.repository.UserRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,14 +34,18 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final SpeechkitService speechkitService;
     private final String botToken;
     private final String botUsername;
+    private final UserRepository userRepository;
+    private final MessageRepository messageRepository;
 
     @Autowired
     public RecognizerBotService(SpeechkitService speechkitService,
                                 @Value("${botToken}") String botToken,
-                                @Value("${botUsername}") String botUsername) {
+                                @Value("${botUsername}") String botUsername, UserRepository userRepository, MessageRepository messageRepository) {
         this.speechkitService = speechkitService;
         this.botToken = botToken;
         this.botUsername = botUsername;
+        this.userRepository = userRepository;
+        this.messageRepository = messageRepository;
     }
 
     @Override
@@ -43,22 +54,40 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         Voice voice = update.getMessage().getVoice();
         Long chatId = update.getMessage().getChatId();
+        User user = userRepository.findByChatId(chatId);
+        if (user == null) {
+            user = new User();
+            user.setChatId(chatId);
+            user.setName(update.getMessage().getChat().getUserName());
+            user.setState(UserStatus.ACTIVE);
+            userRepository.save(user);
+            logger.info(update.getMessage().getChat().toString());
+        }
+        Message message = new Message();
+        message.setUser(user);
         if (voice != null) {
+            message.setMessageType(MessageType.VOICE);
             logger.info("Message has voice {}", voice.toString());//байт , sec
             if (voice.getDuration() > ONE_MINUTE) {
                 logger.info("Message too long: {}", voice.getDuration());
                 sendMsg(chatId, "Вам недоступны сообщения длительностью более 1 минуты");
+                message.setResult(MessageResult.ERROR);
+                messageRepository.save(message);
                 return;
             }
             if (voice.getFileSize() > ONE_MEGABYTE) {
                 logger.warn("Message too big: {}", voice.getFileSize());
                 sendMsg(chatId, "Вам недоступны объемные сообщения");
+                message.setResult(MessageResult.ERROR);
+                messageRepository.save(message);
                 return;
             }
 
             File voiceFile = executeFile(voice);
             if (voiceFile == null) {
                 logger.warn("No voice");
+                message.setResult(MessageResult.ERROR);
+                messageRepository.save(message);
                 return;
             }
             String text;
@@ -67,12 +96,20 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             } catch (IOException e) {
                 logger.error("Cant recognize message", e);
                 sendMsg(chatId, "Не могу распознать сообщение");
+                message.setResult(MessageResult.ERROR);
+                messageRepository.save(message);
                 return;
             } finally {
                 deleteFile(voiceFile);
             }
             sendMsg(chatId, text);
+            message.setResult(MessageResult.SUCCESS);
+            messageRepository.save(message);
         } else if (update.hasMessage() && update.getMessage().hasText()) {
+            message.setMessageType(MessageType.TEXT);
+            message.setResult(MessageResult.ERROR);
+            messageRepository.save(message);
+
             sendMsg(chatId, "Функция преобразования текста временно не доступна");
         }
     }
