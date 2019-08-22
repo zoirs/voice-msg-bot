@@ -9,5 +9,6 @@ public enum MessageResult {
     VOICE_MSG_TOO_HARD,
     CANT_EXECUTE_VOICE,
     CANT_RECOGNIZE,
+    SYSTEM_MSG,
     ERROR
 }

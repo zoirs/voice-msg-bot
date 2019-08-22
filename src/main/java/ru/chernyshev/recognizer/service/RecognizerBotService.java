@@ -95,11 +95,21 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             } finally {
                 deleteFile(voiceFile);
             }
+            if (StringUtils.isEmpty(text)) {
+                sendMsg(chatId, "Не распознано");
+                messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
+                return;
+            }
             sendMsg(chatId, text);
             messageService.update(message, MessageType.VOICE, MessageResult.SUCCESS);
         } else if (update.hasMessage() && update.getMessage().hasText()) {
-            sendMsg(chatId, "Функция преобразования текста временно не доступна");
-            messageService.update(message, MessageType.VOICE, MessageResult.WITHOUT_VOICE);
+            if (update.getMessage().getText().equals("/start")) {
+                sendMsg(chatId, "Запишите аудио или перешлите голосовое сообщение из другого чата");
+                messageService.update(message, MessageType.TEXT, MessageResult.SYSTEM_MSG);
+            } else {
+                sendMsg(chatId, "Функция преобразования текста временно не доступна");
+                messageService.update(message, MessageType.TEXT, MessageResult.SYSTEM_MSG);
+            }
         }
     }
 

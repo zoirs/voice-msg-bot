@@ -24,7 +24,6 @@ public class AimTokenService {
     private final String tokensUrl;
     private AimToken iamToken;
 
-
     @Autowired
     public AimTokenService(RestTemplate restTemplate, GwtService gwtService, @Value("${tokensUrl}") String tokensUrl) {
         this.restTemplate = restTemplate;
