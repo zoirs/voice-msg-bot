@@ -19,7 +19,7 @@ public class User extends AbstractTimestampEntity {
     @Column(nullable = false, unique = true)
     private Long chatId;
 
-    @Column(nullable = false)
+    @Column
     private String name;
 
     @Column(nullable = false)

@@ -3,7 +3,10 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
-
-    <include file="changelogs/0.0.1.xml"/>
-    <include file="changelogs/0.0.2.xml"/>
+    <changeSet author="Denis" id="0.0.2">
+        <sql>
+            ALTER TABLE users
+            ALTER COLUMN name DROP NOT NULL;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
