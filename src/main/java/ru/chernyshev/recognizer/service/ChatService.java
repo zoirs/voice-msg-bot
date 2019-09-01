@@ -17,15 +17,20 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Service
-public class UserService {
-    private static Logger logger = LoggerFactory.getLogger(UserService.class);
+public class ChatService {
+    private static Logger logger = LoggerFactory.getLogger(ChatService.class);
     private static final int MAX = 50;
+
+    private static final String USERCHATTYPE = "private";
+    private static final String GROUPCHATTYPE = "group";
+    private static final String CHANNELCHATTYPE = "channel";
+    private static final String SUPERGROUPCHATTYPE  = "supergroup";
 
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, MessageRepository messageRepository) {
+    public ChatService(UserRepository userRepository, MessageRepository messageRepository) {
         this.userRepository = userRepository;
         this.messageRepository = messageRepository;
     }
@@ -36,6 +41,9 @@ public class UserService {
             user = new ChatEntity();
             user.setChatId(chat.getId());
             user.setUserName(chat.getUserName());
+            user.setFirstName(chat.getFirstName());
+            user.setLastName(chat.getLastName());
+            user.setGroupType(getGroupType(chat));
             user.setState(UserStatus.ACTIVE);
             userRepository.save(user);
             logger.info("Create new user by chat {}", chat.toString());
@@ -68,5 +76,21 @@ public class UserService {
 
     private static Date localDateTimeToDate(LocalDateTime localDateTime) {
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    private String getGroupType(Chat chat) {
+        if (chat.isChannelChat()) {
+            return CHANNELCHATTYPE;
+        }
+        if (chat.isGroupChat()) {
+            return GROUPCHATTYPE;
+        }
+        if (chat.isSuperGroupChat()) {
+            return SUPERGROUPCHATTYPE;
+        }
+        if (chat.isUserChat()) {
+            return USERCHATTYPE;
+        }
+        return null;
     }
 }

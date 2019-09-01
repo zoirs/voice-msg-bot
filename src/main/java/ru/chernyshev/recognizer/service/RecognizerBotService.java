@@ -32,17 +32,19 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final SpeechkitService speechkitService;
     private final String botToken;
     private final String botUsername;
-    private final UserService userService;
+    private final ChatService chatService;
     private final MessageService messageService;
 
     @Autowired
     public RecognizerBotService(SpeechkitService speechkitService,
                                 @Value("${botToken}") String botToken,
-                                @Value("${botUsername}") String botUsername,UserService userService, MessageService messageService) {
+                                @Value("${botUsername}") String botUsername,
+                                ChatService chatService,
+                                MessageService messageService) {
         this.speechkitService = speechkitService;
         this.botToken = botToken;
         this.botUsername = botUsername;
-        this.userService = userService;
+        this.chatService = chatService;
         this.messageService = messageService;
     }
 
@@ -66,10 +68,10 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         Long chatId = receivedMsg.getChatId();
 
-        ChatEntity chat = userService.getOrCreate(receivedMsg.getChat());
+        ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
         MessageEntity message = messageService.create(chat);
 
-        boolean valid = userService.isValid(chat);
+        boolean valid = chatService.isValid(chat);
         if (!valid) {
             sendMsg(chatId, "Превышен лимит сообщений");
             messageService.update(message, MessageType.UNKNOWN, MessageResult.BANNED);
