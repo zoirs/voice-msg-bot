@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Chat;
-import ru.chernyshev.recognizer.entity.User;
+import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.UserStatus;
 import ru.chernyshev.recognizer.repository.MessageRepository;
@@ -30,12 +30,12 @@ public class UserService {
         this.messageRepository = messageRepository;
     }
 
-    public User getOrCreate(Chat chat) {
-        User user = userRepository.findByChatId(chat.getId());
+    public ChatEntity getOrCreate(Chat chat) {
+        ChatEntity user = userRepository.findByChatId(chat.getId());
         if (user == null) {
-            user = new User();
+            user = new ChatEntity();
             user.setChatId(chat.getId());
-            user.setName(chat.getUserName());
+            user.setUserName(chat.getUserName());
             user.setState(UserStatus.ACTIVE);
             userRepository.save(user);
             logger.info("Create new user by chat {}", chat.toString());
@@ -43,14 +43,14 @@ public class UserService {
         return user;
     }
 
-    public boolean isValid(User user) {
-        Long messageToday = messageRepository.countToday(startOfDay(), endOfDay(), MessageResult.SUCCESS, user);
+    public boolean isValid(ChatEntity chat) {
+        Long messageToday = messageRepository.countToday(startOfDay(), endOfDay(), MessageResult.SUCCESS, chat);
         if (messageToday > MAX) {
-            logger.info("User {} send {} today", user.getId(), messageToday);
+            logger.info("Chat {} send {} today", chat.getId(), messageToday);
             return false;
         }
-        if (user.getState() != UserStatus.ACTIVE) {
-            logger.info("User {} is {}", user.getId(), user.getState());
+        if (chat.getState() != UserStatus.ACTIVE) {
+            logger.info("Chat {} is {}", chat.getId(), chat.getState());
             return false;
         }
         return true;

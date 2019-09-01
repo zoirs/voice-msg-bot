@@ -3,13 +3,12 @@ package ru.chernyshev.recognizer.entity;
 
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
-import ru.chernyshev.recognizer.model.UserStatus;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "MESSAGES")
-public class Message extends AbstractTimestampEntity {
+public class MessageEntity extends AbstractTimestampEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE,
@@ -19,8 +18,8 @@ public class Message extends AbstractTimestampEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fk_user")
-    private User user;
+    @JoinColumn(name = "fk_chat")
+    private ChatEntity chat;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -54,11 +53,11 @@ public class Message extends AbstractTimestampEntity {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public ChatEntity getChat() {
+        return chat;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setChat(ChatEntity chat) {
+        this.chat = chat;
     }
 }

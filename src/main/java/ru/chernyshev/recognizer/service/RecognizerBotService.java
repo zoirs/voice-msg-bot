@@ -1,5 +1,6 @@
 package ru.chernyshev.recognizer.service;
 
+import io.jsonwebtoken.lang.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.chernyshev.recognizer.entity.Message;
-import ru.chernyshev.recognizer.entity.User;
+import ru.chernyshev.recognizer.entity.ChatEntity;
+import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
 
@@ -25,8 +26,8 @@ import java.nio.file.Files;
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
-    private static Integer ONE_MEGABYTE = 1024 * 1024;
-    private static Integer ONE_MINUTE = 60;
+    private static final int ONE_MEGABYTE = 1024 * 1024;
+    private static final int ONE_MINUTE = 60;
 
     private final SpeechkitService speechkitService;
     private final String botToken;
@@ -49,68 +50,70 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         logger.trace("Received {}", update);
 
-        Voice voice = update.getMessage().getVoice();
-        Long chatId = update.getMessage().getChatId();
+        org.telegram.telegrambots.meta.api.objects.Message receivedMsg = update.getMessage();
 
-        User user = userService.getOrCreate(update.getMessage().getChat());
-        Message message = messageService.create(user);
+        if (receivedMsg == null) {
+            logger.info("Received message is absent");
+            return;
+        }
 
-        boolean valid = userService.isValid(user);
+        Voice voice = receivedMsg.getVoice();
+
+        if (voice == null) {
+            // Возможно, для статистики не плохо было бы собирать данные
+            return;
+        }
+
+        Long chatId = receivedMsg.getChatId();
+
+        ChatEntity chat = userService.getOrCreate(receivedMsg.getChat());
+        MessageEntity message = messageService.create(chat);
+
+        boolean valid = userService.isValid(chat);
         if (!valid) {
             sendMsg(chatId, "Превышен лимит сообщений");
             messageService.update(message, MessageType.UNKNOWN, MessageResult.BANNED);
             return;
         }
 
-        if (voice != null) {
-            logger.info("Message has voice {}", voice.toString());//байт , sec
-            if (voice.getDuration() > ONE_MINUTE) {
-                logger.info("Message too long: {}", voice.getDuration());
-                sendMsg(chatId, "Вам недоступны сообщения длительностью более 1 минуты");
-                messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
-                return;
-            }
-            if (voice.getFileSize() > ONE_MEGABYTE) {
-                logger.warn("Message too big: {}", voice.getFileSize());
-                sendMsg(chatId, "Вам недоступны объемные сообщения");
-                messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_HARD);
-                return;
-            }
-
-            File voiceFile = executeFile(voice);
-            if (voiceFile == null) {
-                logger.warn("No voice");
-                sendMsg(chatId, "Голосовое сообщение не доступно");
-                messageService.update(message, MessageType.VOICE, MessageResult.CANT_EXECUTE_VOICE);
-                return;
-            }
-            String text;
-            try {
-                text = speechkitService.recognize(voiceFile);
-            } catch (IOException e) {
-                logger.error("Cant recognize message", e);
-                sendMsg(chatId, "Не могу распознать сообщение");
-                messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
-                return;
-            } finally {
-                deleteFile(voiceFile);
-            }
-            if (StringUtils.isEmpty(text)) {
-                sendMsg(chatId, "Не распознано");
-                messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
-                return;
-            }
-            sendMsg(chatId, text);
-            messageService.update(message, MessageType.VOICE, MessageResult.SUCCESS);
-        } else if (update.hasMessage() && update.getMessage().hasText()) {
-            if (update.getMessage().getText().equals("/start")) {
-                sendMsg(chatId, "Запишите аудио или перешлите голосовое сообщение из другого чата");
-                messageService.update(message, MessageType.TEXT, MessageResult.SYSTEM_MSG);
-            } else {
-                sendMsg(chatId, "Функция преобразования текста временно не доступна");
-                messageService.update(message, MessageType.TEXT, MessageResult.SYSTEM_MSG);
-            }
+        logger.info("Message has voice {}", voice.toString());//байт , sec
+        if (voice.getDuration() > ONE_MINUTE) {
+            logger.info("Message too long: {}", voice.getDuration());
+            sendMsg(chatId, "Вам недоступны сообщения длительностью более 1 минуты");
+            messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
+            return;
         }
+        if (voice.getFileSize() > ONE_MEGABYTE) {
+            logger.warn("Message too big: {}", voice.getFileSize());
+            sendMsg(chatId, "Вам недоступны объемные сообщения");
+            messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_HARD);
+            return;
+        }
+
+        File voiceFile = executeFile(voice);
+        if (voiceFile == null || !voiceFile.exists()) {
+            logger.warn("No voice {}", voice.getFileId());
+            messageService.update(message, MessageType.VOICE, MessageResult.CANT_EXECUTE_VOICE);
+            return;
+        }
+        String text;
+        try {
+            text = speechkitService.recognize(voiceFile);
+        } catch (IOException e) {
+            logger.error("Cant recognize message", e);
+            sendMsg(chatId, "Не могу распознать сообщение");
+            messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
+            return;
+        } finally {
+            deleteFile(voiceFile);
+        }
+        if (StringUtils.isEmpty(text)) {
+            sendMsg(chatId, "Не распознано");
+            messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
+            return;
+        }
+        sendMsg(chatId, text);
+        messageService.update(message, MessageType.VOICE, MessageResult.SUCCESS);
     }
 
     private void deleteFile(File voiceFile) {
@@ -132,7 +135,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
         SendMessage message = new SendMessage() // Create a SendMessage object with mandatory fields
                 .setChatId(chatId)
-                .setText(text);
+                .setText(Strings.capitalize(text));
         try {
             execute(message); // Call method to send the message
         } catch (TelegramApiException e) {

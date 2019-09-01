@@ -1,8 +1,8 @@
 package ru.chernyshev.recognizer.repository;
 
 import org.springframework.data.repository.CrudRepository;
-import ru.chernyshev.recognizer.entity.User;
+import ru.chernyshev.recognizer.entity.ChatEntity;
 
-public interface UserRepository extends CrudRepository<User, Long> {
-    User findByChatId(Long chatId);
+public interface UserRepository extends CrudRepository<ChatEntity, Long> {
+    ChatEntity findByChatId(Long chatId);
 }

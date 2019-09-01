@@ -1,0 +1,30 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.1.0">
+        <sql>
+            ALTER TABLE users
+            RENAME TO chats;
+
+            ALTER TABLE chats
+            RENAME name TO "userName";
+
+            ALTER TABLE chats
+            ADD COLUMN "firstName" character varying(255);
+
+            ALTER TABLE chats
+            ADD COLUMN "lastName" character varying(255);
+
+            ALTER TABLE chats
+            ADD COLUMN "groupType" character varying(255);
+
+            ALTER TABLE messages
+            RENAME fk_user TO fk_chat;
+
+            ALTER SEQUENCE seq_user
+            RENAME TO seq_chat;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

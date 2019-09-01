@@ -2,8 +2,8 @@ package ru.chernyshev.recognizer.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.chernyshev.recognizer.entity.Message;
-import ru.chernyshev.recognizer.entity.User;
+import ru.chernyshev.recognizer.entity.ChatEntity;
+import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.repository.MessageRepository;
@@ -18,13 +18,13 @@ public class MessageService {
         this.messageRepository = messageRepository;
     }
 
-    public Message create(User user) {
-        Message message = new Message();
-        message.setUser(user);
+    public MessageEntity create(ChatEntity chat) {
+        MessageEntity message = new MessageEntity();
+        message.setChat(chat);
         return messageRepository.save(message);
     }
 
-    public void update(Message message, MessageType voice, MessageResult error) {
+    public void update(MessageEntity message, MessageType voice, MessageResult error) {
         message.setMessageType(voice);
         message.setResult(error);
         messageRepository.save(message);
