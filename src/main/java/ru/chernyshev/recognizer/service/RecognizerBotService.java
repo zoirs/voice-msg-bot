@@ -81,7 +81,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         logger.info("Message has voice {}", voice.toString());//байт , sec
         if (voice.getDuration() > MAX_SECONDS) {
             logger.info("Message too long: {}", voice.getDuration());
-            sendMsg(chatId, "Вам недоступны сообщения длительностью более 1 минуты");
+            sendMsg(chatId, "Вам недоступны сообщения длительностью более 30 секунд");
             messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
             return;
         }
