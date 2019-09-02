@@ -26,8 +26,8 @@ import java.nio.file.Files;
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
-    private static final int ONE_MEGABYTE = 1024 * 1024;
-    private static final int ONE_MINUTE = 60;
+    private static final int MAX_SIZE = 1024 * 1024;
+    private static final int MAX_SECONDS = 29;
 
     private final SpeechkitService speechkitService;
     private final String botToken;
@@ -79,13 +79,13 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         logger.info("Message has voice {}", voice.toString());//байт , sec
-        if (voice.getDuration() > ONE_MINUTE) {
+        if (voice.getDuration() > MAX_SECONDS) {
             logger.info("Message too long: {}", voice.getDuration());
             sendMsg(chatId, "Вам недоступны сообщения длительностью более 1 минуты");
             messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
             return;
         }
-        if (voice.getFileSize() > ONE_MEGABYTE) {
+        if (voice.getFileSize() > MAX_SIZE) {
             logger.warn("Message too big: {}", voice.getFileSize());
             sendMsg(chatId, "Вам недоступны объемные сообщения");
             messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_HARD);
