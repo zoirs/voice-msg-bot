@@ -19,3 +19,6 @@ spring.datasource.driver-class-name=
 
 spring.jpa.database-platform=
 spring.liquibase.change-log=
+
+google.projectId=
+google.jsonFileName=

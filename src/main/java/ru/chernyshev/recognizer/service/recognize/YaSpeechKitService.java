@@ -1,4 +1,4 @@
-package ru.chernyshev.recognizer.service;
+package ru.chernyshev.recognizer.service.recognize;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.model.MsgDto;
+import ru.chernyshev.recognizer.service.AimTokenService;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,9 +21,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Component
-public class SpeechkitService {
+public class YaSpeechKitService implements Recognizer {
 
-    private static Logger logger = LoggerFactory.getLogger(SpeechkitService.class);
+    private static Logger logger = LoggerFactory.getLogger(YaSpeechKitService.class);
 
     private final RestTemplate restTemplate;
     private final String urlSynthesize;
@@ -31,45 +32,16 @@ public class SpeechkitService {
     private final AimTokenService aimTokenService;
 
     @Autowired
-    public SpeechkitService(RestTemplate restTemplate,
-                            @Value("${urlSynthesize}") String urlSynthesize,
-                            @Value("${urlRecognize}") String urlRecognize,
-                            @Value("${folderId}") String folderId, AimTokenService aimTokenService) {
+    public YaSpeechKitService(RestTemplate restTemplate,
+                              @Value("${urlSynthesize}") String urlSynthesize,
+                              @Value("${urlRecognize}") String urlRecognize,
+                              @Value("${folderId}") String folderId, AimTokenService aimTokenService) {
         this.restTemplate = restTemplate;
         this.urlSynthesize = urlSynthesize;
         this.urlRecognize = urlRecognize;
         this.folderId = folderId;
         this.aimTokenService = aimTokenService;
     }
-
-    public byte[] synthesize(String text) throws IOException {
-        logger.info("Start synthesize");
-
-        String iamToken = aimTokenService.getIamToken(); // Укажите IAM-токен.
-
-        String lang = "ru-RU";
-
-        String query = String.format("text=%s&lang=%s&folderId=%s",
-                text,
-                URLEncoder.encode(lang, "UTF-8"),
-                URLEncoder.encode(folderId, "UTF-8"));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(iamToken);
-        HttpEntity entity = new HttpEntity(headers);
-
-        ResponseEntity<byte[]> responce = restTemplate.postForEntity(urlSynthesize + query, entity, byte[].class);
-        if (responce.getStatusCodeValue() != 200) {
-            logger.error("Bad response {}, {}", responce.getStatusCode(), responce.toString());
-            return null;
-        }
-        File saveFile = new File(UUID.randomUUID().toString() + ".ogg");
-        FileUtils.writeByteArrayToFile(saveFile, Objects.requireNonNull(responce.getBody()));
-
-        logger.info("Finish synthesize, save {}", saveFile);
-        return responce.getBody();
-    }
-
 
     public String recognize(File file) throws IOException {
         logger.info("Start recognize");
@@ -97,7 +69,35 @@ public class SpeechkitService {
         }
 
         MsgDto msg = response.getBody();
-        logger.info("Finish recognize {}", msg != null ? msg.getResult() : null);
+        logger.info("Recognize yandex {}", msg != null ? msg.getResult() : null);
         return msg != null ? msg.getResult() : null;
+    }
+
+    private byte[] synthesize(String text) throws IOException {
+        logger.info("Start synthesize");
+
+        String iamToken = aimTokenService.getIamToken(); // Укажите IAM-токен.
+
+        String lang = "ru-RU";
+
+        String query = String.format("text=%s&lang=%s&folderId=%s",
+                text,
+                URLEncoder.encode(lang, "UTF-8"),
+                URLEncoder.encode(folderId, "UTF-8"));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(iamToken);
+        HttpEntity entity = new HttpEntity(headers);
+
+        ResponseEntity<byte[]> responce = restTemplate.postForEntity(urlSynthesize + query, entity, byte[].class);
+        if (responce.getStatusCodeValue() != 200) {
+            logger.error("Bad response {}, {}", responce.getStatusCode(), responce.toString());
+            return null;
+        }
+        File saveFile = new File(UUID.randomUUID().toString() + ".ogg");
+        FileUtils.writeByteArrayToFile(saveFile, Objects.requireNonNull(responce.getBody()));
+
+        logger.info("Finish synthesize, save {}", saveFile);
+        return responce.getBody();
     }
 }

@@ -31,3 +31,5 @@ build/
 .vscode/
 
 /src/main/resources/application.properties
+/src/main/resources/*.json
+/src/main/resources/*.pem

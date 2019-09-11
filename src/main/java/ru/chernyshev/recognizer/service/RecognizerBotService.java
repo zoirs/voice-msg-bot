@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -17,31 +18,34 @@ import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
+import ru.chernyshev.recognizer.service.recognize.RecognizeFactory;
+import ru.chernyshev.recognizer.service.recognize.Recognizer;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 @Component
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
     private static final int MAX_SIZE = 1024 * 1024;
-    private static final int MAX_SECONDS = 29;
+    private static final int MAX_SECONDS = 59;
 
-    private final SpeechkitService speechkitService;
+    private final RecognizeFactory recognizeFactory;
     private final String botToken;
     private final String botUsername;
     private final ChatService chatService;
     private final MessageService messageService;
 
     @Autowired
-    public RecognizerBotService(SpeechkitService speechkitService,
+    public RecognizerBotService(RecognizeFactory recognizeFactory,
                                 @Value("${botToken}") String botToken,
                                 @Value("${botUsername}") String botUsername,
                                 ChatService chatService,
                                 MessageService messageService) {
-        this.speechkitService = speechkitService;
+        this.recognizeFactory = recognizeFactory;
         this.botToken = botToken;
         this.botUsername = botUsername;
         this.chatService = chatService;
@@ -51,8 +55,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         logger.trace("Received {}", update);
-
-        org.telegram.telegrambots.meta.api.objects.Message receivedMsg = update.getMessage();
+        Message receivedMsg = update.getMessage();
 
         if (receivedMsg == null) {
             logger.info("Received message is absent");
@@ -79,8 +82,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         logger.info("Message has voice {}", voice.toString());//байт , sec
-        if (voice.getDuration() > MAX_SECONDS) {
-            logger.info("Message too long: {}", voice.getDuration());
+        Integer duration = voice.getDuration();
+        if (duration > MAX_SECONDS) {
+            logger.info("Message too long: {}", duration);
             sendMsg(chatId, "Вам недоступны сообщения длительностью более 30 секунд");
             messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
             return;
@@ -98,9 +102,15 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             messageService.update(message, MessageType.VOICE, MessageResult.CANT_EXECUTE_VOICE);
             return;
         }
-        String text;
+        String text = null;
         try {
-            text = speechkitService.recognize(voiceFile);
+            List<Recognizer> recognizers = recognizeFactory.create(duration);
+            for (Recognizer recognizer : recognizers) {
+                text = recognizer.recognize(voiceFile);
+                if (!StringUtils.isEmpty(text)) {
+                    break;
+                }
+            }
         } catch (IOException e) {
             logger.error("Cant recognize message", e);
             sendMsg(chatId, "Не могу распознать сообщение");
