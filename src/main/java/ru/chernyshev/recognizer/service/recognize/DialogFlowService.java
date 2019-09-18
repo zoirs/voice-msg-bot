@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.RecognizerBotService;
 import ru.chernyshev.recognizer.utils.EnvUtils;
 
@@ -71,6 +72,11 @@ public class DialogFlowService implements Recognizer {
         QueryResult queryResult = response.getQueryResult();
         logger.info("Recognize dialogflow {}", queryResult.getQueryText());
         return queryResult.getQueryText();
+    }
+
+    @Override
+    public RecognizerType getType() {
+        return RecognizerType.DIALOGFLOW;
     }
 
     private InputAudioConfig getInputAudioConfig() {

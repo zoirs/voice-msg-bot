@@ -6,6 +6,7 @@ import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
+import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.repository.MessageRepository;
 
 @Service
@@ -28,6 +29,12 @@ public class MessageService {
         message.setMessageType(voice);
         message.setResult(error);
         messageRepository.save(message);
+    }
 
+    public void updateSuccess(MessageEntity message, RecognizerType recognizerType) {
+        message.setMessageType(MessageType.VOICE);
+        message.setResult(MessageResult.SUCCESS);
+        message.setRecognizerType(recognizerType);
+        messageRepository.save(message);
     }
 }

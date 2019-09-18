@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.model.MsgDto;
+import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.AimTokenService;
 
 import java.io.File;
@@ -71,6 +72,11 @@ public class YaSpeechKitService implements Recognizer {
         MsgDto msg = response.getBody();
         logger.info("Recognize yandex {}", msg != null ? msg.getResult() : null);
         return msg != null ? msg.getResult() : null;
+    }
+
+    @Override
+    public RecognizerType getType() {
+        return RecognizerType.YANDEX;
     }
 
     private byte[] synthesize(String text) throws IOException {

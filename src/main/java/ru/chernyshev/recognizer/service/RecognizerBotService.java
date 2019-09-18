@@ -18,6 +18,7 @@ import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
+import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.recognize.RecognizeFactory;
 import ru.chernyshev.recognizer.service.recognize.Recognizer;
 
@@ -103,10 +104,12 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
         String text = null;
+        RecognizerType recognizerType = null;
         try {
             List<Recognizer> recognizers = recognizeFactory.create(duration);
             for (Recognizer recognizer : recognizers) {
                 text = recognizer.recognize(voiceFile);
+                recognizerType = recognizer.getType();
                 if (!StringUtils.isEmpty(text)) {
                     break;
                 }
@@ -125,7 +128,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
         sendMsg(chatId, text);
-        messageService.update(message, MessageType.VOICE, MessageResult.SUCCESS);
+        messageService.updateSuccess(message, recognizerType);
     }
 
     private void deleteFile(File voiceFile) {

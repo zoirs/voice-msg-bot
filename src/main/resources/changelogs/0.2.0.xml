@@ -3,10 +3,13 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.2.0">
+        <sql>
 
-    <include file="changelogs/0.0.1.xml"/>
-    <include file="changelogs/0.0.2.xml"/>
-    <include file="changelogs/0.1.0.xml"/>
-    <include file="changelogs/0.1.1.xml"/>
-    <include file="changelogs/0.2.0.xml"/>
+            ALTER TABLE messages
+            ADD COLUMN recognizer_type character varying(255);
+
+            update messages set recognizer_type = 'YANDEX' where result = 'SUCCESS';
+        </sql>
+    </changeSet>
 </databaseChangeLog>

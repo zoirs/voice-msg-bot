@@ -3,6 +3,7 @@ package ru.chernyshev.recognizer.entity;
 
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.MessageType;
+import ru.chernyshev.recognizer.model.RecognizerType;
 
 import javax.persistence.*;
 
@@ -28,6 +29,10 @@ public class MessageEntity extends AbstractTimestampEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private MessageType messageType = MessageType.UNKNOWN;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private RecognizerType recognizerType;
 
     public MessageResult getResult() {
         return result;
@@ -60,4 +65,13 @@ public class MessageEntity extends AbstractTimestampEntity {
     public void setChat(ChatEntity chat) {
         this.chat = chat;
     }
+
+    public RecognizerType getRecognizerType() {
+        return recognizerType;
+    }
+
+    public void setRecognizerType(RecognizerType recognizerType) {
+        this.recognizerType = recognizerType;
+    }
+
 }
