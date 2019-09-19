@@ -7,7 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import ru.chernyshev.recognizer.model.RecognizerType;
@@ -36,7 +36,7 @@ public class DialogFlowService implements Recognizer {
 
         logger.info("System.getenv() {}",System.getenv().get("GOOGLE_CLOUD_PROJECT"));
         logger.info("System.getenv() {}",System.getenv().get("GOOGLE_APPLICATION_CREDENTIALS"));
-        Resource settings = new ClassPathResource(jsonFileName);
+        Resource settings = new FileSystemResource(jsonFileName);//todo грузить из resources
         if (!settings.exists() || !settings.isFile()) {
             logger.error("Setting not found");
             throw new IllegalStateException("");
