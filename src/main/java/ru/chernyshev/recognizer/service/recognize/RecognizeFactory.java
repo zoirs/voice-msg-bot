@@ -28,6 +28,7 @@ public class RecognizeFactory {
         if (duration >= 30) {
             return ImmutableList.of(dialogFlowService);
         }
+        //todo переделать, не должен каждый раз создаваться список
         List<Recognizer> recognizers = Lists.newArrayList(dialogFlowService, yaSpeechKitService);
         Collections.shuffle(recognizers);
         return ImmutableList.copyOf(recognizers);

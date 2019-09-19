@@ -59,7 +59,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         Message receivedMsg = update.getMessage();
 
         if (receivedMsg == null) {
-            logger.info("Received message is absent");
+            logger.info("Received message is absent {}", update);
             return;
         }
 
@@ -86,7 +86,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         Integer duration = voice.getDuration();
         if (duration > MAX_SECONDS) {
             logger.info("Message too long: {}", duration);
-            sendMsg(chatId, "Вам недоступны сообщения длительностью более 30 секунд");
+            sendMsg(chatId, "Вам недоступны сообщения длительностью более " + MAX_SECONDS + " секунд");
             messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
             return;
         }
