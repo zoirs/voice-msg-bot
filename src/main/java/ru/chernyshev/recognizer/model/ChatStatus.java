@@ -1,6 +1,6 @@
 package ru.chernyshev.recognizer.model;
 
-public enum UserStatus {
+public enum ChatStatus {
     ACTIVE,
     BANNED
 }

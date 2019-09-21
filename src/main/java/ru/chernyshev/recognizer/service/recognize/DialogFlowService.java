@@ -57,9 +57,15 @@ public class DialogFlowService implements Recognizer {
 
     }
 
-    public String recognize(File voiceFile) throws IOException {
+    public String recognize(File voiceFile) {
 
-        byte[] inputAudio = FileUtils.readFileToByteArray(voiceFile);
+        byte[] inputAudio;
+        try {
+            inputAudio = FileUtils.readFileToByteArray(voiceFile);
+        } catch (IOException e) {
+            logger.error("Cant read file {}", voiceFile);
+            return null;
+        }
 
         DetectIntentRequest request = DetectIntentRequest.newBuilder()
                 .setSession(session.toString())
@@ -77,6 +83,11 @@ public class DialogFlowService implements Recognizer {
     @Override
     public RecognizerType getType() {
         return RecognizerType.DIALOGFLOW;
+    }
+
+    @Override
+    public boolean isApplicable(int duration) {
+        return duration < 60;
     }
 
     private InputAudioConfig getInputAudioConfig() {

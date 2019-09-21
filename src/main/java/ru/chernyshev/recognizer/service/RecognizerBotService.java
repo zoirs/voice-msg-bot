@@ -16,8 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
+import ru.chernyshev.recognizer.model.ChatStatus;
 import ru.chernyshev.recognizer.model.MessageResult;
-import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.recognize.RecognizeFactory;
 import ru.chernyshev.recognizer.service.recognize.Recognizer;
@@ -33,6 +33,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
     private static final int MAX_SIZE = 1024 * 1024;
     private static final int MAX_SECONDS = 59;
+    private static final int MAX_MESSAGES_PER_DAY = 200;
 
     private final RecognizeFactory recognizeFactory;
     private final String botToken;
@@ -55,11 +56,10 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        logger.trace("Received {}", update);
         Message receivedMsg = update.getMessage();
 
         if (receivedMsg == null) {
-            logger.info("Received message is absent {}", update);
+            // Обычно, это редактирование сообщения
             return;
         }
 
@@ -70,65 +70,68 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
+        logger.info("Message has voice {}", voice.toString());//байт , sec
+
         Long chatId = receivedMsg.getChatId();
 
         ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
         MessageEntity message = messageService.create(chat);
 
-        boolean valid = chatService.isValid(chat);
-        if (!valid) {
-            sendMsg(chatId, "Превышен лимит сообщений");
-            messageService.update(message, MessageType.UNKNOWN, MessageResult.BANNED);
+        if (chat.getState() != ChatStatus.ACTIVE) {
+            logger.info("Chat {} is {}", chat.getId(), chat.getState());
+            messageService.update(message, MessageResult.BANNED);
             return;
         }
 
-        logger.info("Message has voice {}", voice.toString());//байт , sec
+        Long messageToday = chatService.getMessagesToday(chat);
+        if (messageToday > MAX_MESSAGES_PER_DAY) {
+            logger.info("Chat {} send {} today", chat.getId(), messageToday);
+            sendMsg(chatId, "Превышено ограничение " + MAX_MESSAGES_PER_DAY + " сообщение в день");
+            messageService.update(message, MessageResult.VOICE_MSG_TOO_MUCH_TODAY);
+            return;
+        }
+
         Integer duration = voice.getDuration();
         if (duration > MAX_SECONDS) {
             logger.info("Message too long: {}", duration);
             sendMsg(chatId, "Вам недоступны сообщения длительностью более " + MAX_SECONDS + " секунд");
-            messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_LONG);
+            messageService.update(message, MessageResult.VOICE_MSG_TOO_LONG);
             return;
         }
         if (voice.getFileSize() > MAX_SIZE) {
             logger.warn("Message too big: {}", voice.getFileSize());
             sendMsg(chatId, "Вам недоступны объемные сообщения");
-            messageService.update(message, MessageType.VOICE, MessageResult.VOICE_MSG_TOO_HARD);
+            messageService.update(message, MessageResult.VOICE_MSG_TOO_HARD);
             return;
         }
 
         File voiceFile = executeFile(voice);
         if (voiceFile == null || !voiceFile.exists()) {
             logger.warn("No voice {}", voice.getFileId());
-            messageService.update(message, MessageType.VOICE, MessageResult.CANT_EXECUTE_VOICE);
+            messageService.update(message, MessageResult.CANT_EXECUTE_VOICE);
             return;
         }
+
         String text = null;
         RecognizerType recognizerType = null;
-        try {
-            List<Recognizer> recognizers = recognizeFactory.create(duration);
-            for (Recognizer recognizer : recognizers) {
-                text = recognizer.recognize(voiceFile);
-                recognizerType = recognizer.getType();
-                if (!StringUtils.isEmpty(text)) {
-                    break;
-                }
+        List<Recognizer> recognizers = recognizeFactory.create(duration);
+        for (Recognizer recognizer : recognizers) {
+            text = recognizer.recognize(voiceFile);
+            recognizerType = recognizer.getType();
+            if (!StringUtils.isEmpty(text)) {
+                break;
             }
-        } catch (IOException e) {
-            logger.error("Cant recognize message", e);
-            sendMsg(chatId, "Не могу распознать сообщение");
-            messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
-            return;
-        } finally {
-            deleteFile(voiceFile);
         }
+
+        deleteFile(voiceFile);
+
         if (StringUtils.isEmpty(text)) {
             sendMsg(chatId, "Не распознано");
-            messageService.update(message, MessageType.VOICE, MessageResult.CANT_RECOGNIZE);
-            return;
+            messageService.update(message, MessageResult.CANT_RECOGNIZE);
+        } else {
+            sendMsg(chatId, text);
+            messageService.updateSuccess(message, recognizerType);
         }
-        sendMsg(chatId, text);
-        messageService.updateSuccess(message, recognizerType);
     }
 
     private void deleteFile(File voiceFile) {

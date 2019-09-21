@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
-import ru.chernyshev.recognizer.model.UserStatus;
+import ru.chernyshev.recognizer.model.ChatStatus;
 import ru.chernyshev.recognizer.repository.MessageRepository;
-import ru.chernyshev.recognizer.repository.UserRepository;
+import ru.chernyshev.recognizer.repository.ChatRepository;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,49 +19,39 @@ import java.util.Date;
 @Service
 public class ChatService {
     private static Logger logger = LoggerFactory.getLogger(ChatService.class);
-    private static final int MAX = 50;
 
     private static final String USERCHATTYPE = "private";
     private static final String GROUPCHATTYPE = "group";
     private static final String CHANNELCHATTYPE = "channel";
     private static final String SUPERGROUPCHATTYPE  = "supergroup";
 
-    private final UserRepository userRepository;
+    private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;
 
     @Autowired
-    public ChatService(UserRepository userRepository, MessageRepository messageRepository) {
-        this.userRepository = userRepository;
+    public ChatService(ChatRepository chatRepository, MessageRepository messageRepository) {
+        this.chatRepository = chatRepository;
         this.messageRepository = messageRepository;
     }
 
     public ChatEntity getOrCreate(Chat chat) {
-        ChatEntity user = userRepository.findByChatId(chat.getId());
-        if (user == null) {
-            user = new ChatEntity();
-            user.setChatId(chat.getId());
-            user.setUserName(chat.getUserName());
-            user.setFirstName(chat.getFirstName());
-            user.setLastName(chat.getLastName());
-            user.setGroupType(getGroupType(chat));
-            user.setState(UserStatus.ACTIVE);
-            userRepository.save(user);
-            logger.info("Create new user by chat {}", chat.toString());
+        ChatEntity chatEntity = chatRepository.findByChatId(chat.getId());
+        if (chatEntity == null) {
+            chatEntity = new ChatEntity();
+            chatEntity.setChatId(chat.getId());
+            chatEntity.setUserName(chat.getUserName());
+            chatEntity.setFirstName(chat.getFirstName());
+            chatEntity.setLastName(chat.getLastName());
+            chatEntity.setGroupType(getGroupType(chat));
+            chatEntity.setState(ChatStatus.ACTIVE);
+            chatRepository.save(chatEntity);
+            logger.info("Create new chatEntity by chat {}", chat.toString());
         }
-        return user;
+        return chatEntity;
     }
 
-    public boolean isValid(ChatEntity chat) {
-        Long messageToday = messageRepository.countToday(startOfDay(), endOfDay(), MessageResult.SUCCESS, chat);
-        if (messageToday > MAX) {
-            logger.info("Chat {} send {} today", chat.getId(), messageToday);
-            return false;
-        }
-        if (chat.getState() != UserStatus.ACTIVE) {
-            logger.info("Chat {} is {}", chat.getId(), chat.getState());
-            return false;
-        }
-        return true;
+    public Long getMessagesToday(ChatEntity chat) {
+        return messageRepository.countToday(startOfDay(), endOfDay(), MessageResult.SUCCESS, chat);
     }
 
     private static Date startOfDay() {

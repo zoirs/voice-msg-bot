@@ -1,6 +1,6 @@
 package ru.chernyshev.recognizer.entity;
 
-import ru.chernyshev.recognizer.model.UserStatus;
+import ru.chernyshev.recognizer.model.ChatStatus;
 
 import javax.persistence.*;
 import java.util.List;
@@ -30,7 +30,7 @@ public class ChatEntity extends AbstractTimestampEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserStatus state;
+    private ChatStatus state;
 
     @OneToMany(mappedBy = "chat")
     private List<MessageEntity> chatMessages;
@@ -92,11 +92,11 @@ public class ChatEntity extends AbstractTimestampEntity {
     }
 
 
-    public UserStatus getState() {
+    public ChatStatus getState() {
         return state;
     }
 
-    public void setState(UserStatus state) {
+    public void setState(ChatStatus state) {
         this.state = state;
     }
 }

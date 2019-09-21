@@ -17,6 +17,7 @@ import ru.chernyshev.recognizer.service.AimTokenService;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Objects;
 import java.util.UUID;
@@ -44,10 +45,15 @@ public class YaSpeechKitService implements Recognizer {
         this.aimTokenService = aimTokenService;
     }
 
-    public String recognize(File file) throws IOException {
-        logger.info("Start recognize");
+    public String recognize(File file) {
 
-        byte[] bytes = FileUtils.readFileToByteArray(file);
+        byte[] bytes;
+        try {
+            bytes = FileUtils.readFileToByteArray(file);
+        } catch (IOException e) {
+            logger.error("Cant read file " + file, e);
+            return null;
+        }
 
         String iamToken = aimTokenService.getIamToken(); // Укажите IAM-токен.
         if (StringUtils.isEmpty(iamToken)) {
@@ -55,10 +61,16 @@ public class YaSpeechKitService implements Recognizer {
         }
         String lang = "ru-RU";
 
-        String query = String.format("topic=%s&lang=%s&folderId=%s",
-                "general",
-                URLEncoder.encode(lang, "UTF-8"),
-                URLEncoder.encode(folderId, "UTF-8"));
+        String query;
+        try {
+            query = String.format("topic=%s&lang=%s&folderId=%s",
+                    "general",
+                    URLEncoder.encode(lang, "UTF-8"),
+                    URLEncoder.encode(folderId, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Create query exception", e);
+            return null;
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(iamToken);
@@ -77,6 +89,11 @@ public class YaSpeechKitService implements Recognizer {
     @Override
     public RecognizerType getType() {
         return RecognizerType.YANDEX;
+    }
+
+    @Override
+    public boolean isApplicable(int duration) {
+        return duration < 30;
     }
 
     private byte[] synthesize(String text) throws IOException {

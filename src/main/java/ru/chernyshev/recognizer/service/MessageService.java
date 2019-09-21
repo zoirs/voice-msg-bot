@@ -25,8 +25,8 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-    public void update(MessageEntity message, MessageType voice, MessageResult error) {
-        message.setMessageType(voice);
+    public void update(MessageEntity message, MessageResult error) {
+        message.setMessageType(MessageType.VOICE);
         message.setResult(error);
         messageRepository.save(message);
     }
