@@ -77,6 +77,12 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
         MessageEntity message = messageService.create(chat);
 
+        if (!"audio/ogg".equals(voice.getMimeType())) {
+            logger.info("Incorrect audio format {}", voice.getMimeType());
+            messageService.update(message, MessageResult.VOICE_MSG_INCORRECT_FORMAT);
+            return;
+        }
+
         if (chat.getState() != ChatStatus.ACTIVE) {
             logger.info("Chat {} is {}", chat.getId(), chat.getState());
             messageService.update(message, MessageResult.BANNED);

@@ -73,7 +73,13 @@ public class DialogFlowService implements Recognizer {
                 .setInputAudio(ByteString.copyFrom(inputAudio))
                 .build();
 
-        DetectIntentResponse response = sessionsClient.detectIntent(request);
+        DetectIntentResponse response;
+        try {
+            response = sessionsClient.detectIntent(request);
+        } catch (Exception e) {
+            logger.error("Recognize error dialogflow", e);
+            return null;
+        }
 
         QueryResult queryResult = response.getQueryResult();
         logger.info("Recognize dialogflow {}", queryResult.getQueryText());

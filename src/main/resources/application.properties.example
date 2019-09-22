@@ -22,3 +22,5 @@ spring.liquibase.change-log=
 
 google.projectId=
 google.jsonFileName=
+
+recognizers=
