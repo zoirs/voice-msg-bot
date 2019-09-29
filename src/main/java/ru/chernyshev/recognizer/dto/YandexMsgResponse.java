@@ -1,9 +1,9 @@
-package ru.chernyshev.recognizer.model;
+package ru.chernyshev.recognizer.dto;
 
-public class MsgDto {
+public class YandexMsgResponse {
     private String result;
 
-    public MsgDto() {
+    public YandexMsgResponse() {
     }
 
     public String getResult() {

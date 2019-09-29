@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import ru.chernyshev.recognizer.model.MsgDto;
+import ru.chernyshev.recognizer.dto.YandexMsgResponse;
 import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.AimTokenService;
 
@@ -75,13 +75,13 @@ public class YaSpeechKitService implements Recognizer {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(iamToken);
         HttpEntity entity = new HttpEntity<>(bytes, headers);
-        ResponseEntity<MsgDto> response = restTemplate.postForEntity(urlRecognize + query, entity, MsgDto.class);
+        ResponseEntity<YandexMsgResponse> response = restTemplate.postForEntity(urlRecognize + query, entity, YandexMsgResponse.class);
         if (response.getStatusCodeValue() != 200) {
             logger.error("Bad response {}, {}", response.getStatusCode(), response.toString());
             return null;
         }
 
-        MsgDto msg = response.getBody();
+        YandexMsgResponse msg = response.getBody();
         logger.info("Recognize yandex {}", msg != null ? msg.getResult() : null);
         return msg != null ? msg.getResult() : null;
     }

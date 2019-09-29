@@ -24,3 +24,8 @@ google.projectId=
 google.jsonFileName=
 
 recognizers=
+
+ffmpeg.path=
+
+witat.auth=
+witat.url=

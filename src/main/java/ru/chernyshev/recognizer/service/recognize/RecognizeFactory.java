@@ -19,6 +19,7 @@ public class RecognizeFactory {
     @Autowired
     public RecognizeFactory(YaSpeechKitService yaSpeechKitService,
                             DialogFlowService dialogFlowService,
+                            WitAiService witAiService,
                             @Value("${recognizers}") String recognizers) {
 
         this.activeRecognizers = new ArrayList<>();
@@ -30,6 +31,9 @@ public class RecognizeFactory {
                     break;
                 case DIALOGFLOW:
                     activeRecognizers.add(dialogFlowService);
+                    break;
+                case WITAT:
+                    activeRecognizers.add(witAiService);
                     break;
             }
         }
