@@ -45,6 +45,11 @@ public class WitAiService implements Recognizer {
                 .withDefaultSettings()
                 .execute();
 
+        if (file == null || !file.exists()) {
+            logger.error("Ffmpeg cant process file");
+            return null;
+        }
+
         byte[] bytes;
         try {
             bytes = FileUtils.readFileToByteArray(file);
