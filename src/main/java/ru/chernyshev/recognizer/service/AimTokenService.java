@@ -25,7 +25,7 @@ public class AimTokenService {
     private AimToken iamToken;
 
     @Autowired
-    public AimTokenService(RestTemplate restTemplate, GwtService gwtService, @Value("${tokensUrl}") String tokensUrl) {
+    public AimTokenService(RestTemplate restTemplate, GwtService gwtService, @Value("${yandex.tokensUrl}") String tokensUrl) {
         this.restTemplate = restTemplate;
         this.gwtService = gwtService;
         this.tokensUrl = tokensUrl;

@@ -1,12 +1,12 @@
-urlRecognize=
-tokensUrl=
+yandex.urlRecognize=
+yandex.tokensUrl=
 
-folderId=
-serviceAccountId=
-serviceKeyId=
+yandex.folderId=
+yandex.serviceAccountId=
+yandex.serviceKeyId=
 
-key.path=
-key.value=
+yandex.key.path=
+yandex.key.value=
 
 botToken=
 botUsername=

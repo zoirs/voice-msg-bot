@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Objects;
-import java.util.UUID;
 
 @Component
 public class YaSpeechKitService implements Recognizer {
@@ -34,8 +32,8 @@ public class YaSpeechKitService implements Recognizer {
 
     @Autowired
     public YaSpeechKitService(RestTemplate restTemplate,
-                              @Value("${urlRecognize}") String urlRecognize,
-                              @Value("${folderId}") String folderId, AimTokenService aimTokenService) {
+                              @Value("${yandex.urlRecognize}") String urlRecognize,
+                              @Value("${yandex.folderId}") String folderId, AimTokenService aimTokenService) {
         this.restTemplate = restTemplate;
         this.urlRecognize = urlRecognize;
         this.folderId = folderId;

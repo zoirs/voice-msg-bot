@@ -36,11 +36,11 @@ public class GwtService {
     private final String tokensUrl;
 
     @Autowired
-    public GwtService(@Value("${key.path}") String keyPath,
-                      @Value("${key.value}") String keyValue,
-                      @Value("${serviceAccountId}") String serviceAccountId,
-                      @Value("${serviceKeyId}") String serviceKeyId,
-                      @Value("${tokensUrl}") String tokensUrl) {
+    public GwtService(@Value("${yandex.key.path}") String keyPath,
+                      @Value("${yandex.key.value}") String keyValue,
+                      @Value("${yandex.serviceAccountId}") String serviceAccountId,
+                      @Value("${yandex.serviceKeyId}") String serviceKeyId,
+                      @Value("${yandex.tokensUrl}") String tokensUrl) {
         this.keyPath = keyPath;
         this.keyValue = keyValue;
         this.serviceAccountId = serviceAccountId;
