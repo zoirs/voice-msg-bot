@@ -125,6 +125,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             text = recognizer.recognize(voiceFile);
             recognizerType = recognizer.getType();
             if (!StringUtils.isEmpty(text)) {
+                logger.info("Recognize {}: {}", recognizerType, text);
                 break;
             }
         }

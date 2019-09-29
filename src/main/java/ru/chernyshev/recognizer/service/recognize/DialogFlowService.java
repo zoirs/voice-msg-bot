@@ -82,7 +82,6 @@ public class DialogFlowService implements Recognizer {
         }
 
         QueryResult queryResult = response.getQueryResult();
-        logger.info("Recognize dialogflow {}", queryResult.getQueryText());
         return queryResult.getQueryText();
     }
 

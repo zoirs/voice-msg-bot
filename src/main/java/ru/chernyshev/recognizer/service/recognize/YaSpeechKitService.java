@@ -77,7 +77,6 @@ public class YaSpeechKitService implements Recognizer {
         }
 
         YandexMsgResponse msg = response.getBody();
-        logger.info("Recognize yandex {}", msg != null ? msg.getResult() : null);
         return msg != null ? msg.getResult() : null;
     }
 
