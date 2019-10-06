@@ -34,6 +34,9 @@ public class MessageEntity extends AbstractTimestampEntity {
     @Enumerated(EnumType.STRING)
     private RecognizerType recognizerType;
 
+    @Column
+    private Integer duration;
+
     public MessageResult getResult() {
         return result;
     }
@@ -72,6 +75,14 @@ public class MessageEntity extends AbstractTimestampEntity {
 
     public void setRecognizerType(RecognizerType recognizerType) {
         this.recognizerType = recognizerType;
+    }
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
     }
 
 }

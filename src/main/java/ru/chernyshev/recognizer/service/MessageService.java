@@ -2,6 +2,7 @@ package ru.chernyshev.recognizer.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.objects.Voice;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
@@ -19,9 +20,10 @@ public class MessageService {
         this.messageRepository = messageRepository;
     }
 
-    public MessageEntity create(ChatEntity chat) {
+    public MessageEntity create(ChatEntity chat, Voice voice) {
         MessageEntity message = new MessageEntity();
         message.setChat(chat);
+        message.setDuration(voice.getDuration());
         return messageRepository.save(message);
     }
 

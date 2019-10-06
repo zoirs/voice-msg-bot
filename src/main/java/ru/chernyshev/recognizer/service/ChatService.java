@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
@@ -44,8 +45,16 @@ public class ChatService {
             chatEntity.setLastName(chat.getLastName());
             chatEntity.setGroupType(getGroupType(chat));
             chatEntity.setState(ChatStatus.ACTIVE);
+            chatEntity.setGroupName(chat.getTitle());
             chatRepository.save(chatEntity);
             logger.info("Create new chatEntity by chat {}", chat.toString());
+        } else {
+            // Миграция для старых данных
+            if (!StringUtils.isEmpty(chat.getTitle()) && StringUtils.isEmpty(chatEntity.getGroupName())) {
+                chatEntity.setGroupName(chat.getTitle());
+                chatRepository.save(chatEntity);
+                logger.info("ChatEntity was updated chat {}", chat.toString());
+            }
         }
         return chatEntity;
     }

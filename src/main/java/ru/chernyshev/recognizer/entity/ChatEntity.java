@@ -27,6 +27,8 @@ public class ChatEntity extends AbstractTimestampEntity {
     private String lastName;
     @Column
     private String groupType;
+    @Column
+    private String groupName;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -94,6 +96,14 @@ public class ChatEntity extends AbstractTimestampEntity {
 
     public ChatStatus getState() {
         return state;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 
     public void setState(ChatStatus state) {
