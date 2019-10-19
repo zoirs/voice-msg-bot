@@ -85,9 +85,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        String from = FromBuilder.create(receivedMsg).setItalic().get();
 
-        Message initMessage = sendMsg(chatId, from + WAIT_TEXT);
+        Message initMessage = sendMsg(chatId, WAIT_TEXT);
         if (initMessage != null) {
             messageService.update(entityMessage, MessageResult.WAIT);
         } else {
@@ -97,21 +96,22 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         List<Recognizer> recognizers = recognizeFactory.create(voice.getDuration());
+        String from = FromBuilder.create(receivedMsg).setItalic().get();
 
         CompletableFuture
                 .supplyAsync(() -> executeFile(voice), service)
                 .thenApply(file -> new Recognize(file, recognizers).get())
-                .thenAccept(result -> updateResult(entityMessage, initMessage, result.getKey() ,result.getValue() ));
+                .thenAccept(result -> updateResult(entityMessage, initMessage, from, result.getKey(), result.getValue()));
 
     }
 
-    private void updateResult(MessageEntity entity, Message message, String text, RecognizerType recognizerType) {
+    private void updateResult(MessageEntity entity, Message message, String from, String text, RecognizerType recognizerType) {
         try {
             EditMessageText editMessage = new EditMessageText();
             editMessage.enableMarkdown(true);
             editMessage.setChatId(message.getChatId());
             editMessage.setMessageId(message.getMessageId());
-            editMessage.setText(message.getText().replace(WAIT_TEXT, text));
+            editMessage.setText(from + text);
             execute(editMessage);
             messageService.updateSuccess(entity, recognizerType);
         } catch (TelegramApiException e) {

@@ -30,7 +30,7 @@ public class FromBuilder {
         if (isEmpty(user.getFirstName()) && isEmpty(user.getLastName())) {
             return "";
         }
-        StringBuilder result = new StringBuilder("от ");
+        StringBuilder result = new StringBuilder("От ");
         if (!isEmpty(user.getFirstName())) {
             result
                     .append(textType.prefix)
