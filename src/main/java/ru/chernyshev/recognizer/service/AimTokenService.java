@@ -17,7 +17,7 @@ import ru.chernyshev.recognizer.model.AimToken;
 @Component
 public class AimTokenService {
 
-    private static Logger logger = LoggerFactory.getLogger(AimTokenService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AimTokenService.class);
 
     private final RestTemplate restTemplate;
     private final GwtService gwtService;

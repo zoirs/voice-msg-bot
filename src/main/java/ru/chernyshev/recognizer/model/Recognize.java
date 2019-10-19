@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 public class Recognize implements Supplier<Pair<String, RecognizerType>> {
 
-    private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
+    private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
 
     private final File voiceFile;
     private final List<Recognizer> recognizers;

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import static ru.chernyshev.recognizer.utils.FfmpegCommandBuilder.Key.*;
 
 public class FfmpegCommandBuilder {
-    private static Logger logger = LoggerFactory.getLogger(FfmpegCommandBuilder.class);
+    private static final Logger logger = LoggerFactory.getLogger(FfmpegCommandBuilder.class);
 
     private final String ffmpegPath;
     private final String inputFilePath;
@@ -52,7 +52,7 @@ public class FfmpegCommandBuilder {
         return new File(tmpDir, outputFilePath);
     }
 
-    static enum Key {
+    enum Key {
         IN_FILE("-i"),
         AUDIO_CODEC("-acodec"),
         BIT_RATE("-b:a"),

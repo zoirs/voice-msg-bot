@@ -15,7 +15,7 @@ import static org.springframework.http.HttpStatus.Series.SERVER_ERROR;
 
 public class ErrorHandler implements ResponseErrorHandler {
 
-    private static Logger logger = LoggerFactory.getLogger(RecognizerApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(RecognizerApplication.class);
 
     @Override
     public void handleError(ClientHttpResponse response) throws IOException {

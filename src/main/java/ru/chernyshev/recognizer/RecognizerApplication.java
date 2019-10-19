@@ -14,7 +14,7 @@ import ru.chernyshev.recognizer.service.RecognizerBotService;
 @SpringBootApplication
 public class RecognizerApplication {
 
-    private static Logger logger = LoggerFactory.getLogger(RecognizerApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(RecognizerApplication.class);
 
     public static void main(String[] args) {
         logger.info("Start app...");

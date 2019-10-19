@@ -23,7 +23,7 @@ import java.net.URLEncoder;
 @Component
 public class YaSpeechKitRecognizer implements Recognizer {
 
-    private static Logger logger = LoggerFactory.getLogger(YaSpeechKitRecognizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(YaSpeechKitRecognizer.class);
 
     private final RestTemplate restTemplate;
     private final String urlRecognize;
@@ -53,6 +53,7 @@ public class YaSpeechKitRecognizer implements Recognizer {
         String iamToken = aimTokenService.getIamToken(); // Укажите IAM-токен.
         if (StringUtils.isEmpty(iamToken)) {
             logger.error("iam token is empty");
+            return null;
         }
         String lang = "ru-RU";
 

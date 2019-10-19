@@ -27,7 +27,7 @@ import java.util.Date;
 @Service
 public class GwtService {
 
-    private static Logger logger = LoggerFactory.getLogger(AimTokenService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AimTokenService.class);
 
     private final String keyPath;
     private final String keyValue;

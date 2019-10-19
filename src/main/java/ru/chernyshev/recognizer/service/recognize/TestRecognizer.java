@@ -13,7 +13,7 @@ import static ru.chernyshev.recognizer.model.RecognizerType.TEST;
 @Service
 public class TestRecognizer implements Recognizer {
 
-    private static Logger logger = LoggerFactory.getLogger(TestRecognizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(TestRecognizer.class);
 
     @Override
     public String recognize(File voiceFile) {

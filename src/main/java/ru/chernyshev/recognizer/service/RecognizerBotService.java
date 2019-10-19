@@ -33,9 +33,9 @@ import java.util.concurrent.Executors;
 @Service
 public class RecognizerBotService extends TelegramLongPollingBot {
 
-    private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
+    private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
 
-    private ExecutorService service = Executors.newFixedThreadPool(2);
+    private final ExecutorService service = Executors.newFixedThreadPool(2);
 
     private final RecognizeFactory recognizeFactory;
     private final String botToken;
@@ -105,12 +105,13 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
     }
 
-    private void updateResult(MessageEntity entity, Message message, String from, String text, RecognizerType recognizerType) {
+    // разделить на два метода, отправку, и обновление ентити
+    private void updateResult(MessageEntity entity, Message initMessage, String from, String text, RecognizerType recognizerType) {
         try {
             EditMessageText editMessage = new EditMessageText();
             editMessage.enableMarkdown(true);
-            editMessage.setChatId(message.getChatId());
-            editMessage.setMessageId(message.getMessageId());
+            editMessage.setChatId(initMessage.getChatId());
+            editMessage.setMessageId(initMessage.getMessageId());
             editMessage.setText(from + text);
             execute(editMessage);
             messageService.updateSuccess(entity, recognizerType);

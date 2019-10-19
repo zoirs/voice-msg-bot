@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Service
 public class DialogFlowRecognizer implements Recognizer {
-    private static Logger logger = LoggerFactory.getLogger(DialogFlowRecognizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(DialogFlowRecognizer.class);
 
     private static final AudioEncoding ENCODING = AudioEncoding.AUDIO_ENCODING_OGG_OPUS;
     private static final int SAMPLE_RATE_HERTZ = 16000;

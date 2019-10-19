@@ -21,7 +21,7 @@ import java.nio.file.Files;
 @Service
 public class WitAiRecognizer implements Recognizer {
 
-    private static Logger logger = LoggerFactory.getLogger(WitAiRecognizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(WitAiRecognizer.class);
 
     private final String ffmpeg;
     private final RestTemplate restTemplate;

@@ -19,7 +19,7 @@ import java.util.Date;
 
 @Service
 public class ChatService {
-    private static Logger logger = LoggerFactory.getLogger(ChatService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     private static final String USERCHATTYPE = "private";
     private static final String GROUPCHATTYPE = "group";

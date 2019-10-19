@@ -15,7 +15,7 @@ public class MessageValidator {
     public static final int MAX_SECONDS = 59;
     public static final int MAX_MESSAGES_PER_DAY = 250;
 
-    private static Logger logger = LoggerFactory.getLogger(MessageValidator.class);
+    private static final Logger logger = LoggerFactory.getLogger(MessageValidator.class);
 
     private final ChatService chatService;
 
