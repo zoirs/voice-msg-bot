@@ -12,15 +12,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.dto.WitAtMsgResponse;
 import ru.chernyshev.recognizer.model.RecognizerType;
+import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
 @Service
-public class WitAiService implements Recognizer {
+public class WitAiRecognizer implements Recognizer {
 
-    private static Logger logger = LoggerFactory.getLogger(WitAiService.class);
+    private static Logger logger = LoggerFactory.getLogger(WitAiRecognizer.class);
 
     private final String ffmpeg;
     private final RestTemplate restTemplate;
@@ -28,10 +29,10 @@ public class WitAiService implements Recognizer {
     private final String url;
 
     @Autowired
-    public WitAiService(@Value("${ffmpeg.path}") String ffmpeg,
-                        @Value("${witat.auth}") String auth,
-                        @Value("${witat.url}") String url,
-                        RestTemplate restTemplate) {
+    public WitAiRecognizer(@Value("${ffmpeg.path}") String ffmpeg,
+                           @Value("${witat.auth}") String auth,
+                           @Value("${witat.url}") String url,
+                           RestTemplate restTemplate) {
         this.ffmpeg = ffmpeg;
         this.auth = auth;
         this.url = url;

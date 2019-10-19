@@ -11,6 +11,9 @@ public enum MessageResult {
     VOICE_MSG_INCORRECT_FORMAT,
     CANT_EXECUTE_VOICE,
     CANT_RECOGNIZE,
+    WAIT,
+    SEND_ERROR,
+    CANT_UPDATE,
     SYSTEM_MSG,
-    ERROR
+    ERROR;
 }

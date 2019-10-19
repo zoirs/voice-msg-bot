@@ -21,9 +21,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 @Component
-public class YaSpeechKitService implements Recognizer {
+public class YaSpeechKitRecognizer implements Recognizer {
 
-    private static Logger logger = LoggerFactory.getLogger(YaSpeechKitService.class);
+    private static Logger logger = LoggerFactory.getLogger(YaSpeechKitRecognizer.class);
 
     private final RestTemplate restTemplate;
     private final String urlRecognize;
@@ -31,9 +31,9 @@ public class YaSpeechKitService implements Recognizer {
     private final AimTokenService aimTokenService;
 
     @Autowired
-    public YaSpeechKitService(RestTemplate restTemplate,
-                              @Value("${yandex.urlRecognize}") String urlRecognize,
-                              @Value("${yandex.folderId}") String folderId, AimTokenService aimTokenService) {
+    public YaSpeechKitRecognizer(RestTemplate restTemplate,
+                                 @Value("${yandex.urlRecognize}") String urlRecognize,
+                                 @Value("${yandex.folderId}") String folderId, AimTokenService aimTokenService) {
         this.restTemplate = restTemplate;
         this.urlRecognize = urlRecognize;
         this.folderId = folderId;

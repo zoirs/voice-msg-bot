@@ -11,7 +11,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import ru.chernyshev.recognizer.model.RecognizerType;
-import ru.chernyshev.recognizer.service.RecognizerBotService;
 import ru.chernyshev.recognizer.utils.EnvUtils;
 
 import java.io.File;
@@ -20,8 +19,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class DialogFlowService implements Recognizer {
-    private static Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
+public class DialogFlowRecognizer implements Recognizer {
+    private static Logger logger = LoggerFactory.getLogger(DialogFlowRecognizer.class);
 
     private static final AudioEncoding ENCODING = AudioEncoding.AUDIO_ENCODING_OGG_OPUS;
     private static final int SAMPLE_RATE_HERTZ = 16000;
@@ -31,8 +30,8 @@ public class DialogFlowService implements Recognizer {
     private final QueryInput queryInput;
     private final SessionName session;
 
-    public DialogFlowService(@Value("${google.projectId}") String projectId,
-                             @Value("${google.jsonFileName}") String jsonFileName) throws IOException {
+    public DialogFlowRecognizer(@Value("${google.projectId}") String projectId,
+                                @Value("${google.jsonFileName}") String jsonFileName) throws IOException {
 
         logger.info("System.getenv() {}",System.getenv().get("GOOGLE_CLOUD_PROJECT"));
         logger.info("System.getenv() {}",System.getenv().get("GOOGLE_APPLICATION_CREDENTIALS"));
@@ -44,7 +43,7 @@ public class DialogFlowService implements Recognizer {
         try {
             String absolutePath = settings.getFile().getAbsolutePath();
             logger.info("absolutePath {}",absolutePath);
-            Map<String, String> of = ImmutableMap.<String, String>of("GOOGLE_CLOUD_PROJECT", projectId, "GOOGLE_APPLICATION_CREDENTIALS", absolutePath);
+            Map<String, String> of = ImmutableMap.of("GOOGLE_CLOUD_PROJECT", projectId, "GOOGLE_APPLICATION_CREDENTIALS", absolutePath);
             EnvUtils.setEnv(of);
         } catch (Exception e) {
 

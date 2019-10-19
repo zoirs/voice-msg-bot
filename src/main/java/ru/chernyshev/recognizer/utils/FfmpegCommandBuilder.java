@@ -1,4 +1,4 @@
-package ru.chernyshev.recognizer.service.recognize;
+package ru.chernyshev.recognizer.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static ru.chernyshev.recognizer.service.recognize.FfmpegCommandBuilder.Key.*;
+import static ru.chernyshev.recognizer.utils.FfmpegCommandBuilder.Key.*;
 
 public class FfmpegCommandBuilder {
     private static Logger logger = LoggerFactory.getLogger(FfmpegCommandBuilder.class);
