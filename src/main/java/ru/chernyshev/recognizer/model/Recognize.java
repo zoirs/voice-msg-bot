@@ -1,6 +1,5 @@
 package ru.chernyshev.recognizer.model;
 
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -10,10 +9,12 @@ import ru.chernyshev.recognizer.service.recognize.Recognizer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-public class Recognize implements Supplier<Pair<String, RecognizerType>> {
+public class Recognize implements Supplier<Entry<String, RecognizerType>> {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
 
@@ -26,7 +27,7 @@ public class Recognize implements Supplier<Pair<String, RecognizerType>> {
     }
 
     @Override
-    public Pair<String, RecognizerType> get() {
+    public Entry<String, RecognizerType> get() {
         String text = null;
         RecognizerType recognizerType = null;
         for (Recognizer recognizer : recognizers) {
@@ -38,7 +39,7 @@ public class Recognize implements Supplier<Pair<String, RecognizerType>> {
             }
         }
         deleteFile(voiceFile);
-        return new Pair<>(text, recognizerType);
+        return new SimpleEntry<>(text, recognizerType);
     }
 
     private void deleteFile(File voiceFile) {

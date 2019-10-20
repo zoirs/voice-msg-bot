@@ -112,7 +112,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             editMessage.enableMarkdown(true);
             editMessage.setChatId(initMessage.getChatId());
             editMessage.setMessageId(initMessage.getMessageId());
-            editMessage.setText(from + text);
+            editMessage.setText(from + (StringUtils.isEmpty(text) ? "Не распознано" : text));
             execute(editMessage);
             messageService.updateSuccess(entity, recognizerType);
         } catch (TelegramApiException e) {
