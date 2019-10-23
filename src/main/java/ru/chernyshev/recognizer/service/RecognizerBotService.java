@@ -24,6 +24,7 @@ import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.recognize.RecognizeFactory;
 import ru.chernyshev.recognizer.service.recognize.Recognizer;
 import ru.chernyshev.recognizer.utils.FromBuilder;
+import ru.chernyshev.recognizer.utils.MessageKeys;
 
 import java.io.File;
 import java.util.List;
@@ -93,7 +94,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        String text = messageSource.getMessage("wait", null, Locales.find(chat.getLocale()));
+        String text = messageSource.getMessage(MessageKeys.WAIT, null, Locales.find(chat.getLocale()));
         Message initMessage = sendMsg(receivedMsg.getChatId(), text);
         if (initMessage != null) {
             messageService.update(entityMessage, MessageResult.WAIT);
