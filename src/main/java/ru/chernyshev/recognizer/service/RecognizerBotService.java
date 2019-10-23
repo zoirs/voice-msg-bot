@@ -71,10 +71,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
-
         if (receivedMsg.getLeftChatMember() != null && receivedMsg.getLeftChatMember().getUserName().equals(getBotUsername())) {
             logger.info("Was removed {}", receivedMsg.getChat());
+            ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
             chatService.remove(chat);
             return;
         }
@@ -86,6 +85,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         logger.info("Message has voice {}", voice.toString());//байт , sec
 
+        ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
         MessageEntity entityMessage = messageService.create(chat, voice);
 
         MessageResult validateResult = messageValidator.validate(chat, voice);
