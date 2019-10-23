@@ -29,6 +29,10 @@ public class ChatEntity extends AbstractTimestampEntity {
     private String groupType;
     @Column
     private String groupName;
+    @Column
+    private String locale = "ru";
+    @Column
+    private boolean removed = false;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -108,5 +112,21 @@ public class ChatEntity extends AbstractTimestampEntity {
 
     public void setState(ChatStatus state) {
         this.state = state;
+    }
+
+    public String getLocale() {
+        return locale;
+    }
+
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    public void setRemoved(boolean removed) {
+        this.removed = removed;
     }
 }

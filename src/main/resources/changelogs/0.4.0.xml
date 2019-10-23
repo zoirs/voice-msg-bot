@@ -3,12 +3,13 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.4.0">
+        <sql>
+            ALTER TABLE public.chats
+            ADD COLUMN locale character varying(2) DEFAULT 'ru';
 
-    <include file="changelogs/0.0.1.xml"/>
-    <include file="changelogs/0.0.2.xml"/>
-    <include file="changelogs/0.1.0.xml"/>
-    <include file="changelogs/0.1.1.xml"/>
-    <include file="changelogs/0.2.0.xml"/>
-    <include file="changelogs/0.3.1.xml"/>
-    <include file="changelogs/0.4.0.xml"/>
+            ALTER TABLE public.chats
+            ADD COLUMN removed boolean DEFAULT false;
+        </sql>
+    </changeSet>
 </databaseChangeLog>

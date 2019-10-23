@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import ru.chernyshev.recognizer.entity.ChatEntity;
-import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.ChatStatus;
-import ru.chernyshev.recognizer.repository.MessageRepository;
+import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.repository.ChatRepository;
+import ru.chernyshev.recognizer.repository.MessageRepository;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -24,7 +24,7 @@ public class ChatService {
     private static final String USERCHATTYPE = "private";
     private static final String GROUPCHATTYPE = "group";
     private static final String CHANNELCHATTYPE = "channel";
-    private static final String SUPERGROUPCHATTYPE  = "supergroup";
+    private static final String SUPERGROUPCHATTYPE = "supergroup";
 
     private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;
@@ -49,14 +49,31 @@ public class ChatService {
             chatRepository.save(chatEntity);
             logger.info("Create new chatEntity by chat {}", chat.toString());
         } else {
+            boolean needUpdate = false;
+
             // Миграция для старых данных
             if (!StringUtils.isEmpty(chat.getTitle()) && StringUtils.isEmpty(chatEntity.getGroupName())) {
-                chatEntity.setGroupName(chat.getTitle());
-                chatRepository.save(chatEntity);
                 logger.info("ChatEntity was updated chat {}", chat.toString());
+                chatEntity.setGroupName(chat.getTitle());
+                needUpdate = true;
+            }
+
+            if (chatEntity.isRemoved()) {
+                logger.info("Chat come back {}", chat);
+                chatEntity.setRemoved(false);
+                needUpdate = true;
+            }
+
+            if (needUpdate) {
+                chatRepository.save(chatEntity);
             }
         }
         return chatEntity;
+    }
+
+    public void remove(ChatEntity chatEntity) {
+        chatEntity.setRemoved(true);
+        chatRepository.save(chatEntity);
     }
 
     public Long getMessagesToday(ChatEntity chat) {

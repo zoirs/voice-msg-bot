@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -43,7 +44,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final ChatService chatService;
     private final MessageService messageService;
     private final MessageValidator messageValidator;
-    private static final String WAIT_TEXT = "Ожидайте, распознаю...";
+    private final MessageSource messageSource;
 
     @Autowired
     public RecognizerBotService(RecognizeFactory recognizeFactory,
@@ -51,19 +52,29 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                                 @Value("${botUsername}") String botUsername,
                                 ChatService chatService,
                                 MessageService messageService,
-                                MessageValidator messageValidator) {
+                                MessageValidator messageValidator,
+                                MessageSource messageSource) {
         this.recognizeFactory = recognizeFactory;
         this.botToken = botToken;
         this.botUsername = botUsername;
         this.chatService = chatService;
         this.messageService = messageService;
         this.messageValidator = messageValidator;
+        this.messageSource = messageSource;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         Message receivedMsg = update.getMessage();
         if (receivedMsg == null) { // Обычно, это редактирование сообщения
+            return;
+        }
+
+        ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
+
+        if (receivedMsg.getLeftChatMember() != null && receivedMsg.getLeftChatMember().getUserName().equals(getBotUsername())) {
+            logger.info("Was removed {}", receivedMsg.getChat());
+            chatService.remove(chat);
             return;
         }
 
@@ -74,9 +85,6 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         logger.info("Message has voice {}", voice.toString());//байт , sec
 
-        Long chatId = receivedMsg.getChatId();
-
-        ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
         MessageEntity entityMessage = messageService.create(chat, voice);
 
         MessageResult validateResult = messageValidator.validate(chat, voice);
@@ -85,8 +93,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-
-        Message initMessage = sendMsg(chatId, WAIT_TEXT);
+        String text = messageSource.getMessage("wait", null, Locales.find(chat.getLocale()));
+        Message initMessage = sendMsg(receivedMsg.getChatId(), text);
         if (initMessage != null) {
             messageService.update(entityMessage, MessageResult.WAIT);
         } else {
