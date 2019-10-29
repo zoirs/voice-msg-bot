@@ -12,40 +12,37 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.repository.ChatRepository;
+import ru.chernyshev.recognizer.repository.MessageRepository;
 
 import javax.persistence.EntityManagerFactory;
 
 @Configuration
-@EnableJpaRepositories( basePackageClasses = ChatRepository.class )
-public class RepoFactory4Test
-{
+@EnableJpaRepositories(basePackageClasses = {ChatRepository.class, MessageRepository.class})
+public class RepoFactory4Test {
     @Bean
-    public EmbeddedDatabase dataSource()
-    {
+    public EmbeddedDatabase dataSource() {
         EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
-        return builder.setType( EmbeddedDatabaseType.HSQL ).build();
+        return builder.setType(EmbeddedDatabaseType.HSQL).build();
     }
 
     @Bean
-    public EntityManagerFactory entityManagerFactory()
-    {
+    public EntityManagerFactory entityManagerFactory() {
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-        vendorAdapter.setGenerateDdl( true );
+        vendorAdapter.setGenerateDdl(true);
 
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
-        factory.setJpaVendorAdapter( vendorAdapter );
-        factory.setPackagesToScan( ChatEntity.class.getPackage().getName() );
-        factory.setDataSource( dataSource() );
+        factory.setJpaVendorAdapter(vendorAdapter);
+        factory.setPackagesToScan(ChatEntity.class.getPackage().getName());
+        factory.setDataSource(dataSource());
         factory.afterPropertiesSet();
 
         return factory.getObject();
     }
 
     @Bean
-    public PlatformTransactionManager transactionManager()
-    {
+    public PlatformTransactionManager transactionManager() {
         JpaTransactionManager txManager = new JpaTransactionManager();
-        txManager.setEntityManagerFactory( entityManagerFactory() );
+        txManager.setEntityManagerFactory(entityManagerFactory());
         return txManager;
     }
 }

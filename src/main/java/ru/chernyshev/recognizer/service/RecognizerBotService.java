@@ -1,5 +1,6 @@
 package ru.chernyshev.recognizer.service;
 
+import com.google.common.collect.Lists;
 import io.jsonwebtoken.lang.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,14 +10,19 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Voice;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.chernyshev.recognizer.entity.ChatEntity;
+import ru.chernyshev.recognizer.entity.LikeResult;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.model.Recognize;
@@ -46,6 +52,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final MessageService messageService;
     private final MessageValidator messageValidator;
     private final MessageSource messageSource;
+    private final MessageRatingService ratingService;
+    private final boolean turnRating;
 
     @Autowired
     public RecognizerBotService(RecognizeFactory recognizeFactory,
@@ -54,7 +62,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                                 ChatService chatService,
                                 MessageService messageService,
                                 MessageValidator messageValidator,
-                                MessageSource messageSource) {
+                                MessageSource messageSource,
+                                MessageRatingService ratingService,
+                                @Value("${app.rating}") boolean turnRating) {
         this.recognizeFactory = recognizeFactory;
         this.botToken = botToken;
         this.botUsername = botUsername;
@@ -62,11 +72,28 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         this.messageService = messageService;
         this.messageValidator = messageValidator;
         this.messageSource = messageSource;
+        this.ratingService = ratingService;
+        this.turnRating = turnRating;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         Message receivedMsg = update.getMessage();
+        if (update.hasCallbackQuery()){
+            CallbackQuery callbackQuery = update.getCallbackQuery();
+            logger.info("callbackQuery messageId {}",callbackQuery.getMessage().getMessageId());
+            LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage().getMessageId(), callbackQuery.getFrom(), Integer.valueOf(callbackQuery.getData()));
+            ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
+            AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+            answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
+            answerCallbackQuery.setText(messageSource.getMessage(likeResult.name(), null, Locales.find(chat.getLocale())));
+            try {
+                execute(answerCallbackQuery);
+            } catch (TelegramApiException e) {
+                logger.error("s",e);
+            }
+            return;
+        }
         if (receivedMsg == null) { // Обычно, это редактирование сообщения
             return;
         }
@@ -86,7 +113,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         logger.info("Message has voice {}", voice.toString());//байт , sec
 
         ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
-        MessageEntity entityMessage = messageService.create(chat, voice);
+        logger.info("create message {}",receivedMsg.getMessageId());
+        MessageEntity entityMessage = messageService.create(chat, voice, receivedMsg.getMessageId());
 
         MessageResult validateResult = messageValidator.validate(chat, voice);
         if (validateResult != null) { // Нужно ли отправлять нотификации об ошибках?
@@ -121,10 +149,23 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             editMessage.enableMarkdown(true);
             editMessage.setChatId(initMessage.getChatId());
             editMessage.setMessageId(initMessage.getMessageId());
-            editMessage.setText(from + (StringUtils.isEmpty(text) ? "Не распознано" : text));
+            boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
+            editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
+            if (turnRating && recognizeSuccessfully) {
+                InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();// делать по настройке
+                InlineKeyboardButton _1 = new InlineKeyboardButton("1").setCallbackData("1");
+                InlineKeyboardButton _2 = new InlineKeyboardButton("2").setCallbackData("2");
+                InlineKeyboardButton _3 = new InlineKeyboardButton("3").setCallbackData("3");
+                InlineKeyboardButton _4 = new InlineKeyboardButton("4").setCallbackData("4");
+                InlineKeyboardButton _5 = new InlineKeyboardButton("5").setCallbackData("5");
+                editMessage.setText(from + text + "\n\n _" + messageSource.getMessage("give.rating", null, Locales.find(entity.getChat().getLocale())) + ":_");
+                replyMarkup.getKeyboard().add(Lists.newArrayList(_1, _2, _3, _4, _5));
+                editMessage.setReplyMarkup(replyMarkup);
+            }
             execute(editMessage);
-            messageService.updateSuccess(entity, recognizerType);
+            messageService.updateSuccess(entity, recognizerType, editMessage.getMessageId());
         } catch (TelegramApiException e) {
+            logger.error("Cant send message {}", e.toString());
             logger.error("Cant send message", e);
             messageService.update(entity, MessageResult.CANT_UPDATE);
         }
@@ -146,7 +187,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         try {
             return execute(message);
         } catch (TelegramApiException e) {
-            logger.error("Cant send message", e);
+            logger.error("Cant send message to chat {}, error {}", chatId, e);
         }
         return null;
     }

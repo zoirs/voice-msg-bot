@@ -1,0 +1,43 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.5.0">
+        <createSequence sequenceName="seq_users"/>
+        <createSequence sequenceName="seq_likes"/>
+
+        <sql>
+            CREATE TABLE public.users
+            (
+            id bigint NOT NULL,
+            telegram_id bigint,
+            user_name character varying(512),
+            first_name character varying(512),
+            last_name character varying(512),
+            PRIMARY KEY (id)
+            );
+
+            CREATE TABLE public.likes
+            (
+            id bigint NOT NULL,
+            message_id bigint,
+            user_id bigint,
+            rating smallint,
+            CONSTRAINT likes_pkey PRIMARY KEY (id),
+            CONSTRAINT like_constraint UNIQUE (message_id, user_id),
+            CONSTRAINT messages_fk FOREIGN KEY (message_id)
+            REFERENCES public.messages (id) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION,
+            CONSTRAINT users_fk FOREIGN KEY (user_id)
+            REFERENCES public.users (id) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION
+            );
+
+            ALTER TABLE public.messages
+            ADD COLUMN telegram_id bigint;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -8,6 +8,7 @@ import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
 
 import java.util.Date;
+import java.util.List;
 
 public interface MessageRepository extends CrudRepository<MessageEntity, Long> {
 
@@ -16,4 +17,6 @@ public interface MessageRepository extends CrudRepository<MessageEntity, Long> {
                     @Param("endDate") Date endDate,
                     @Param("result") MessageResult result,
                     @Param("chat") ChatEntity chat);
+
+    MessageEntity findByTelegramId(Integer id);
 }

@@ -39,7 +39,7 @@ public class ChatEntity extends AbstractTimestampEntity {
     private ChatStatus state;
 
     @OneToMany(mappedBy = "chat")
-    private List<MessageEntity> chatMessages;
+    private List<MessageEntity> chatMessages; //бессмысленное поле
 
     public String getFirstName() {
         return firstName;
