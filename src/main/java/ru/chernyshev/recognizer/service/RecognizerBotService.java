@@ -125,6 +125,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             execute(editMessage);
             messageService.updateSuccess(entity, recognizerType);
         } catch (TelegramApiException e) {
+            logger.warn(e.toString());
             logger.error("Cant send message", e);
             messageService.update(entity, MessageResult.CANT_UPDATE);
         }
@@ -146,6 +147,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         try {
             return execute(message);
         } catch (TelegramApiException e) {
+            logger.warn(e.toString());
             logger.error("Cant send message", e);
         }
         return null;
@@ -159,6 +161,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             final org.telegram.telegrambots.meta.api.objects.File voiceFile = execute(getFileMethod);
             return downloadFile(voiceFile.getFilePath());
         } catch (final TelegramApiException e) {
+            logger.warn(e.toString());
             logger.error("Cant load file", e);
             return null;
         }

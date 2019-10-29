@@ -34,14 +34,14 @@ public class FromBuilder {
         if (!isEmpty(user.getFirstName())) {
             result
                     .append(textType.prefix)
-                    .append(user.getFirstName())
+                    .append(user.getFirstName().replaceAll(textType.prefix, textType.replaceSymbol))
                     .append(textType.prefix)
                     .append(" ");
         }
         if (!isEmpty(user.getLastName())) {
             result
                     .append(textType.prefix)
-                    .append(user.getLastName())
+                    .append(user.getLastName().replaceAll(textType.prefix, textType.replaceSymbol))
                     .append(textType.prefix);
         }
         result.append(":" + "\n");
@@ -50,14 +50,16 @@ public class FromBuilder {
 
 
     private enum Prefix {
-        NONE(""),
-        BOLD("*"),
-        ITALIC("_");
+        NONE("", ""),
+        BOLD("*", "."),
+        ITALIC("_", "-");
 
         private final String prefix;
+        private final String replaceSymbol;
 
-        Prefix(String prefix) {
+        Prefix(String prefix, String replaceSymbol) {
             this.prefix = prefix;
+            this.replaceSymbol = replaceSymbol;
         }
     }
 
