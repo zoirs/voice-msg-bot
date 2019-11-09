@@ -29,14 +29,6 @@ public class MessageRatingService {
         this.userService = userService;
     }
 
-    public void addLike(MessageEntity message, UserEntity from, Integer rating) {
-        LikeEntity like = new LikeEntity();
-        like.setRating(rating);
-        like.setUser(from);
-        like.setMessage(message);
-        likeRepository.save(like);
-    }
-
     @Transactional
     public LikeResult addLike(Integer messageId, User user, Integer rating) {
         MessageEntity messageEntity = messageRepository.findByTelegramId(messageId);
@@ -57,7 +49,12 @@ public class MessageRatingService {
         }
 
         logger.info("MessageId {}, by {}, set rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
-        addLike(messageEntity, userEntity, rating);
+
+        LikeEntity like = new LikeEntity();
+        like.setRating(rating);
+        like.setUser(userEntity);
+        like.setMessage(messageEntity);
+        likeRepository.save(like);
         return LikeResult.LIKE_ADDED;
     }
 }
