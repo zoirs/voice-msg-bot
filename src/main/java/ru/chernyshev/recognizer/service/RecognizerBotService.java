@@ -79,18 +79,17 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         Message receivedMsg = update.getMessage();
-        if (update.hasCallbackQuery()){
+        if (turnRating && update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
-            logger.info("callbackQuery messageId {}",callbackQuery.getMessage().getMessageId());
             LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage().getMessageId(), callbackQuery.getFrom(), Integer.valueOf(callbackQuery.getData()));
             ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
-            AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
-            answerCallbackQuery.setCallbackQueryId(callbackQuery.getId());
-            answerCallbackQuery.setText(messageSource.getMessage(likeResult.name(), null, Locales.find(chat.getLocale())));
+            AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery()
+                    .setCallbackQueryId(callbackQuery.getId())
+                    .setText(messageSource.getMessage(likeResult.name(), null, Locales.find(chat.getLocale())));
             try {
                 execute(answerCallbackQuery);
             } catch (TelegramApiException e) {
-                logger.error("s",e);
+                logger.error(String.format("Set rating error message %s, %s", callbackQuery.getMessage().getMessageId(), e.toString()), e);
             }
             return;
         }
@@ -113,7 +112,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         logger.info("Message has voice {}", voice.toString());//байт , sec
 
         ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
-        logger.info("create message {}",receivedMsg.getMessageId());
+        logger.info("create message {}", receivedMsg.getMessageId());
         MessageEntity entityMessage = messageService.create(chat, voice, receivedMsg.getMessageId());
 
         MessageResult validateResult = messageValidator.validate(chat, voice);
@@ -153,20 +152,16 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
             if (turnRating && recognizeSuccessfully) {
                 InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();// делать по настройке
-                InlineKeyboardButton _1 = new InlineKeyboardButton("1").setCallbackData("1");
-                InlineKeyboardButton _2 = new InlineKeyboardButton("2").setCallbackData("2");
-                InlineKeyboardButton _3 = new InlineKeyboardButton("3").setCallbackData("3");
-                InlineKeyboardButton _4 = new InlineKeyboardButton("4").setCallbackData("4");
-                InlineKeyboardButton _5 = new InlineKeyboardButton("5").setCallbackData("5");
+                InlineKeyboardButton dislike = new InlineKeyboardButton("\uD83D\uDC4E").setCallbackData("-1");
+                InlineKeyboardButton like = new InlineKeyboardButton("\uD83D\uDC4D").setCallbackData("1");
                 editMessage.setText(from + text + "\n\n _" + messageSource.getMessage("give.rating", null, Locales.find(entity.getChat().getLocale())) + ":_");
-                replyMarkup.getKeyboard().add(Lists.newArrayList(_1, _2, _3, _4, _5));
+                replyMarkup.getKeyboard().add(Lists.newArrayList(dislike, like));
                 editMessage.setReplyMarkup(replyMarkup);
             }
             execute(editMessage);
             messageService.updateSuccess(entity, recognizerType, editMessage.getMessageId());
         } catch (TelegramApiException e) {
-            logger.error("Cant send message {}", e.toString());
-            logger.error("Cant send message", e);
+            logger.error(String.format("Cant send message %s", e.toString()), e);
             messageService.update(entity, MessageResult.CANT_UPDATE);
         }
     }
@@ -187,7 +182,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         try {
             return execute(message);
         } catch (TelegramApiException e) {
-            logger.error("Cant send message to chat {}, error {}", chatId, e);
+            logger.error(String.format("Cant send message to chat %s, error %s", chatId, e.toString()), e);
         }
         return null;
     }
