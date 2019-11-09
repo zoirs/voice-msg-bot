@@ -30,7 +30,7 @@ public class MessageRatingService {
     }
 
     @Transactional
-    public LikeResult addLike(Integer messageId, User user, Integer rating) {
+    public LikeResult addLike(Integer messageId, User user, int rating) {
         MessageEntity messageEntity = messageRepository.findByTelegramId(messageId);
         if (messageEntity == null) {
             return LikeResult.LIKE_NONE;
@@ -43,8 +43,10 @@ public class MessageRatingService {
 
         if (likeEntity != null) {
             logger.info("MessageId {}, by {}, update rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
-            likeEntity.setRating(rating);
-            likeRepository.save(likeEntity);
+            if (likeEntity.getRating() != rating) {
+                likeEntity.setRating(rating);
+                likeRepository.save(likeEntity);
+            }
             return LikeResult.LIKE_UPDATED;
         }
 

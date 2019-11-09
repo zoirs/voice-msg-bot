@@ -81,7 +81,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         Message receivedMsg = update.getMessage();
         if (turnRating && update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
-            LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage().getMessageId(), callbackQuery.getFrom(), Integer.valueOf(callbackQuery.getData()));
+            LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage().getMessageId(), callbackQuery.getFrom(), Integer.parseInt(callbackQuery.getData()));
             ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
             AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery()
                     .setCallbackQueryId(callbackQuery.getId())

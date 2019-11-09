@@ -4,6 +4,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
     <changeSet author="Denis" id="0.5.0">
+
         <createSequence sequenceName="seq_users"/>
         <createSequence sequenceName="seq_likes"/>
 
