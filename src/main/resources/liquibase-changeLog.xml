@@ -11,4 +11,5 @@
     <include file="changelogs/0.2.0.xml"/>
     <include file="changelogs/0.3.1.xml"/>
     <include file="changelogs/0.4.0.xml"/>
+    <include file="changelogs/0.5.0.xml"/>
 </databaseChangeLog>

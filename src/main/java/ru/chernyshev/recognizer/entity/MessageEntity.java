@@ -6,6 +6,8 @@ import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "MESSAGES")
@@ -17,6 +19,9 @@ public class MessageEntity extends AbstractTimestampEntity {
     @SequenceGenerator(name="SEQ_MESSAGES",
             sequenceName="SEQ_MESSAGES", allocationSize = 1)
     private Long id;
+
+    @Column
+    private Integer telegramId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fk_chat")
@@ -36,6 +41,9 @@ public class MessageEntity extends AbstractTimestampEntity {
 
     @Column
     private Integer duration;
+
+    @OneToMany(mappedBy = "message")
+    private List<LikeEntity> likes = new ArrayList<>();
 
     public MessageResult getResult() {
         return result;
@@ -85,4 +93,19 @@ public class MessageEntity extends AbstractTimestampEntity {
         this.duration = duration;
     }
 
+    public List<LikeEntity> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(List<LikeEntity> likes) {
+        this.likes = likes;
+    }
+
+    public Integer getTelegramId() {
+        return telegramId;
+    }
+
+    public void setTelegramId(Integer telegramId) {
+        this.telegramId = telegramId;
+    }
 }
