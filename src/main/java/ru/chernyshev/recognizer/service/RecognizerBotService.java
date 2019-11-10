@@ -44,7 +44,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
 
-    private final ExecutorService service = Executors.newFixedThreadPool(2);
+    private final ExecutorService service = Executors.newFixedThreadPool(4);
 
     private final RecognizeFactory recognizeFactory;
     private final String botToken;
@@ -179,7 +179,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         try {
             return execute(message);
         } catch (TelegramApiException e) {
-            logger.error(String.format("Cant send message to chat %s, error %s", chatId, e.toString()), e);
+            logger.error(String.format("Cant send message to chat %s, error %s", chat.getId(), e.toString()), e);
         }
         return null;
     }
