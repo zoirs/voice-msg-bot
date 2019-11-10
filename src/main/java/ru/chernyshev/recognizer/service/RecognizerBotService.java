@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.Voice;
@@ -122,7 +123,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         String text = messageSource.getMessage(MessageKeys.WAIT, null, Locales.find(chat.getLocale()));
-        Message initMessage = sendMsg(receivedMsg.getChatId(), text);
+        Message initMessage = sendMsg(receivedMsg.getChat(), text);
         if (initMessage != null) {
             messageService.update(entityMessage, MessageResult.WAIT);
         } else {
@@ -166,17 +167,13 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
     }
 
-    private Message sendMsg(Long chatId, String text) {
+    private Message sendMsg(Chat chat, String text) {
         if (StringUtils.isEmpty(text)) {
             logger.error("Cant send message empty msg");
             return null;
         }
-        if (chatId == null) {
-            logger.error("Unknown chat id");
-            return null;
-        }
         SendMessage message = new SendMessage()
-                .setChatId(chatId)
+                .setChatId(chat.getId())
                 .enableMarkdown(true)
                 .setText(Strings.capitalize(text));
         try {
@@ -195,7 +192,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             final org.telegram.telegrambots.meta.api.objects.File voiceFile = execute(getFileMethod);
             return downloadFile(voiceFile.getFilePath());
         } catch (final TelegramApiException e) {
-            logger.error("Cant load file", e);
+            logger.error("Cant load file {}, {}", voice, e.toString());
+            logger.error("", e);
             return null;
         }
     }
