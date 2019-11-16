@@ -23,6 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.chernyshev.recognizer.entity.ChatEntity;
+import ru.chernyshev.recognizer.entity.LikeEntity;
 import ru.chernyshev.recognizer.entity.LikeResult;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.MessageResult;
@@ -82,11 +83,15 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         Message receivedMsg = update.getMessage();
         if (turnRating && update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
-            LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage(), callbackQuery.getFrom(), Integer.parseInt(callbackQuery.getData()));
-            ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
+            LikeEntity likeEntity = ratingService.addLike(callbackQuery.getMessage(), callbackQuery.getFrom(), Integer.parseInt(callbackQuery.getData()));
+            String message = null;
+            if (likeEntity != null) {
+                ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
+                message = messageSource.getMessage(LikeResult.LIKE_ADDED.name(), null, Locales.find(chat.getLocale()));
+            }
             AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery()
                     .setCallbackQueryId(callbackQuery.getId())
-                    .setText(messageSource.getMessage(likeResult.name(), null, Locales.find(chat.getLocale())));
+                    .setText(message);
             try {
                 execute(answerCallbackQuery);
             } catch (TelegramApiException e) {

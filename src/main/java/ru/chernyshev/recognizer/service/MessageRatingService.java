@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.chernyshev.recognizer.entity.LikeEntity;
-import ru.chernyshev.recognizer.entity.LikeResult;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.entity.UserEntity;
 import ru.chernyshev.recognizer.repository.LikeRepository;
@@ -31,11 +30,10 @@ public class MessageRatingService {
     }
 
     @Transactional
-    public LikeResult addLike(Message message, User user, int rating) {
-        logger.info("Add like message {} in chat {} ", message.getMessageId(), message.getChatId());
+    public LikeEntity addLike(Message message, User user, int rating) {
         MessageEntity messageEntity = messageRepository.findByTelegramIdAndChat_ChatId(message.getMessageId(), message.getChatId());
         if (messageEntity == null) {
-            return LikeResult.LIKE_NONE;
+            return null;
         }
         UserEntity userEntity = userService.getOrCreate(user);
 
@@ -47,9 +45,10 @@ public class MessageRatingService {
             logger.info("MessageId {}, by {}, update rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
             if (likeEntity.getRating() != rating) {
                 likeEntity.setRating(rating);
-                likeRepository.save(likeEntity);
+                likeEntity = likeRepository.save(likeEntity);
+                logRating(likeEntity.getMessage());
             }
-            return LikeResult.LIKE_UPDATED;
+            return likeEntity;
         }
 
         logger.info("MessageId {}, by {}, set rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
@@ -59,6 +58,13 @@ public class MessageRatingService {
         like.setUser(userEntity);
         like.setMessage(messageEntity);
         likeRepository.save(like);
-        return LikeResult.LIKE_ADDED;
+        logRating(like.getMessage());
+        return like;
+    }
+
+    private void logRating(MessageEntity message) {
+        Integer disCount = likeRepository.count(message.getId(), -1);
+        Integer likeCount = likeRepository.count(message.getId(), 1);
+        logger.info("Statistic for message {}. like: {} dis: {}", message.getId(), likeCount, disCount);
     }
 }
