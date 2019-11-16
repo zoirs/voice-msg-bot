@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.chernyshev.recognizer.entity.LikeEntity;
 import ru.chernyshev.recognizer.entity.LikeResult;
@@ -30,8 +31,8 @@ public class MessageRatingService {
     }
 
     @Transactional
-    public LikeResult addLike(Integer messageId, User user, int rating) {
-        MessageEntity messageEntity = messageRepository.findByTelegramId(messageId);
+    public LikeResult addLike(Message message, User user, int rating) {
+        MessageEntity messageEntity = messageRepository.findByTelegramIdAndChat_ChatId(message.getMessageId(), message.getChatId());
         if (messageEntity == null) {
             return LikeResult.LIKE_NONE;
         }
