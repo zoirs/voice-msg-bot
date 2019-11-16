@@ -32,6 +32,7 @@ public class MessageRatingService {
 
     @Transactional
     public LikeResult addLike(Message message, User user, int rating) {
+        logger.info("Add like message {} in chat {} ", message.getMessageId(), message.getChatId());
         MessageEntity messageEntity = messageRepository.findByTelegramIdAndChat_ChatId(message.getMessageId(), message.getChatId());
         if (messageEntity == null) {
             return LikeResult.LIKE_NONE;
