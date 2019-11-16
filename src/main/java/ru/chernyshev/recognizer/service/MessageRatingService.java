@@ -47,8 +47,10 @@ public class MessageRatingService {
                 likeEntity.setRating(rating);
                 likeEntity = likeRepository.save(likeEntity);
                 logRating(likeEntity.getMessage());
+                return likeEntity;
+            } else {
+                return null;
             }
-            return likeEntity;
         }
 
         logger.info("MessageId {}, by {}, set rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
