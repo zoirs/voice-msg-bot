@@ -76,7 +76,7 @@ public class DialogFlowRecognizer implements Recognizer {
         try {
             response = sessionsClient.detectIntent(request);
         } catch (Exception e) {
-            logger.error("Recognize error dialogflow", e);
+            logger.error("Recognize error dialogflow {} ", e.toString());
             return null;
         }
 
