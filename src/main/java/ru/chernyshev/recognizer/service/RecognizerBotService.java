@@ -82,7 +82,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         Message receivedMsg = update.getMessage();
         if (turnRating && update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
-            LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage().getMessageId(), callbackQuery.getFrom(), Integer.parseInt(callbackQuery.getData()));
+            LikeResult likeResult = ratingService.addLike(callbackQuery.getMessage(), callbackQuery.getFrom(), Integer.parseInt(callbackQuery.getData()));
             ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
             AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery()
                     .setCallbackQueryId(callbackQuery.getId())
@@ -113,7 +113,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         logger.info("Message has voice {}", voice.toString());//байт , sec
 
         ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
-        logger.info("create message {}", receivedMsg.getMessageId());
+        logger.info("create message {}, chat {}", receivedMsg.getMessageId(), receivedMsg.getChatId());
         MessageEntity entityMessage = messageService.create(chat, voice, receivedMsg.getMessageId());
 
         MessageResult validateResult = messageValidator.validate(chat, voice);
@@ -179,7 +179,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         try {
             return execute(message);
         } catch (TelegramApiException e) {
-            logger.error(String.format("Cant send message to chat %s, error %s", chat.getId(), e.toString()), e);
+            logger.error(String.format("Cant send message to chat %s %s, error %s", chat.getId(), chat.getTitle(), e.toString()), e);
         }
         return null;
     }
@@ -192,8 +192,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             final org.telegram.telegrambots.meta.api.objects.File voiceFile = execute(getFileMethod);
             return downloadFile(voiceFile.getFilePath());
         } catch (final TelegramApiException e) {
-            logger.error("Cant load file {}, {}", voice, e.toString());
-            logger.error("", e);
+            logger.error(String.format("Cant load file %s, %s", voice, e.toString()), e);
             return null;
         }
     }

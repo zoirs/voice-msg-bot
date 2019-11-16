@@ -18,5 +18,5 @@ public interface MessageRepository extends CrudRepository<MessageEntity, Long> {
                     @Param("result") MessageResult result,
                     @Param("chat") ChatEntity chat);
 
-    MessageEntity findByTelegramId(Integer id);
+    MessageEntity findByTelegramIdAndChat_ChatId(Integer telegramId, Long chatId);
 }
