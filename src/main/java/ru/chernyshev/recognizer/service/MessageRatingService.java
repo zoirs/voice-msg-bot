@@ -52,7 +52,7 @@ public class MessageRatingService {
                 logger.info("MessageId {}, by {}, update rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
                 likeEntity.setRating(rating);
                 likeEntity = likeRepository.save(likeEntity);
-                logRating(likeEntity.getMessage());
+                logRating(messageEntity);
                 return likeEntity;
             } else {
                 return null;
@@ -66,7 +66,7 @@ public class MessageRatingService {
         like.setUser(userEntity);
         like.setMessage(messageEntity);
         likeRepository.save(like);
-        logRating(like.getMessage());
+        logRating(messageEntity);
         return like;
     }
 
@@ -94,6 +94,6 @@ public class MessageRatingService {
     private void logRating(MessageEntity message) {
         Integer disCount = likeRepository.count(message.getId(), -1);
         Integer likeCount = likeRepository.count(message.getId(), 1);
-        logger.info("Statistic for message {}. like: {} dis: {}", message.getId(), likeCount, disCount);
+        logger.info("Statistic for message {}, {}. like: {} dis: {}", message.getId(), message.getRecognizerType(), likeCount, disCount);
     }
 }
