@@ -34,11 +34,11 @@ public class ReposTest {
     @Test
     public void givenGenericEntityRepository_whenSaveAndRetreiveEntity_thenOK() {
         ChatEntity s = new ChatEntity();
-        s.setChatId(1L);
+        s.setTelegramId(1L);
         s.setState(ChatStatus.ACTIVE);
         ChatEntity genericEntity = chatRepository
                 .save(s);
-        ChatEntity foundEntity = chatRepository.findByChatId(genericEntity.getId());
+        ChatEntity foundEntity = chatRepository.findByTelegramId(genericEntity.getId());
 
         assertNotNull(foundEntity);
     }

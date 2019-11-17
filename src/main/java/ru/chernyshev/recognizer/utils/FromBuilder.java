@@ -1,24 +1,19 @@
 package ru.chernyshev.recognizer.utils;
 
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.User;
+import ru.chernyshev.recognizer.entity.UserEntity;
 
 import static org.springframework.util.StringUtils.isEmpty;
 
 public class FromBuilder {
-    private final User user;
+    private final UserEntity user;
     private Prefix textType = Prefix.NONE;
 
-    private FromBuilder(User user) {
+    private FromBuilder(UserEntity user) {
         this.user = user;
     }
 
-    public static FromBuilder create(Message receivedMsg) {
-        if (receivedMsg.getForwardFrom() != null) {
-            return new FromBuilder(receivedMsg.getForwardFrom());
-        } else {
-            return new FromBuilder(receivedMsg.getFrom());
-        }
+    public static FromBuilder create(UserEntity userEntity) {
+        return new FromBuilder(userEntity);
     }
 
     public FromBuilder setItalic() {

@@ -5,28 +5,28 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 public abstract class AbstractTimestampEntity {
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created", nullable = false)
-    private Date created;
+    private LocalDateTime created;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated", nullable = false)
-    private Date updated;
+    private LocalDateTime updated;
 
     @PrePersist
     protected void onCreate() {
-        updated = created = new Date();
+        updated = created = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updated = new Date();
+        updated = LocalDateTime.now();
+    }
+
+    public LocalDateTime getUpdated() {
+        return updated;
     }
 }

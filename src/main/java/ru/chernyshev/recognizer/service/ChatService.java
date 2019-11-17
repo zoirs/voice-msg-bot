@@ -12,10 +12,9 @@ import ru.chernyshev.recognizer.model.MessageResult;
 import ru.chernyshev.recognizer.repository.ChatRepository;
 import ru.chernyshev.recognizer.repository.MessageRepository;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 @Service
 public class ChatService {
@@ -36,10 +35,10 @@ public class ChatService {
     }
 
     public ChatEntity getOrCreate(Chat chat) {
-        ChatEntity chatEntity = chatRepository.findByChatId(chat.getId());
+        ChatEntity chatEntity = chatRepository.findByTelegramId(chat.getId());
         if (chatEntity == null) {
             chatEntity = new ChatEntity();
-            chatEntity.setChatId(chat.getId());
+            chatEntity.setTelegramId(chat.getId());
             chatEntity.setUserName(chat.getUserName());
             chatEntity.setFirstName(chat.getFirstName());
             chatEntity.setLastName(chat.getLastName());
@@ -80,18 +79,14 @@ public class ChatService {
         return messageRepository.countToday(startOfDay(), endOfDay(), MessageResult.SUCCESS, chat);
     }
 
-    private static Date startOfDay() {
+    private static LocalDateTime startOfDay() {
         LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
-        return localDateTimeToDate(startOfDay);
+        return startOfDay;
     }
 
-    private static Date endOfDay() {
+    private static LocalDateTime endOfDay() {
         LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
-        return localDateTimeToDate(endOfDay);
-    }
-
-    private static Date localDateTimeToDate(LocalDateTime localDateTime) {
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        return endOfDay;
     }
 
     private String getGroupType(Chat chat) {
@@ -108,5 +103,10 @@ public class ChatService {
             return USERCHATTYPE;
         }
         return null;
+    }
+
+    @NotNull
+    public ChatEntity require(Long id) {
+        return chatRepository.findById(id).get();
     }
 }

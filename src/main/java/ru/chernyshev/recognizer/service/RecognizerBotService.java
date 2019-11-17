@@ -13,12 +13,9 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.Voice;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -36,6 +33,7 @@ import ru.chernyshev.recognizer.utils.MessageKeys;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,6 +53,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final MessageValidator messageValidator;
     private final MessageSource messageSource;
     private final MessageRatingService ratingService;
+
     private final boolean turnRating;
 
     @Autowired
@@ -86,8 +85,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             LikeEntity likeEntity = ratingService.addLike(callbackQuery.getMessage(), callbackQuery.getFrom(), Integer.parseInt(callbackQuery.getData()));
             String message = null;
             if (likeEntity != null) {
-                ChatEntity chat = chatService.getOrCreate(callbackQuery.getMessage().getChat());
-                message = messageSource.getMessage(LikeResult.LIKE_ADDED.name(), null, Locales.find(chat.getLocale()));
+                message = messageSource.getMessage(LikeResult.LIKE_ADDED.name(), null, messageService.getLocale(likeEntity.getMessage()));
             }
             AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery()
                     .setCallbackQueryId(callbackQuery.getId())
@@ -96,6 +94,10 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                 execute(answerCallbackQuery);
             } catch (TelegramApiException e) {
                 logger.error(String.format("Set rating error message %s, %s", callbackQuery.getMessage().getMessageId(), e.toString()), e);
+            }
+            if (likeEntity != null) {
+                Map<String, Integer> rating = ratingService.getRating(likeEntity.getMessage());
+                updateRating(likeEntity.getMessage(), rating.get("like"), rating.get("dis"));
             }
             return;
         }
@@ -115,60 +117,80 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        logger.info("Message has voice {}", voice.toString());//байт , sec
+        logger.info("Message {} in chat {} has voice {}", receivedMsg.getMessageId(), receivedMsg.getChatId(), voice.toString());//байт , sec
 
-        ChatEntity chat = chatService.getOrCreate(receivedMsg.getChat());
-        logger.info("create message {}, chat {}", receivedMsg.getMessageId(), receivedMsg.getChatId());
-        MessageEntity entityMessage = messageService.create(chat, voice, receivedMsg.getMessageId());
+        MessageEntity messageEntity = messageService.create(receivedMsg);
 
-        MessageResult validateResult = messageValidator.validate(chat, voice);
+        MessageResult validateResult = messageValidator.validate(receivedMsg);
         if (validateResult != null) { // Нужно ли отправлять нотификации об ошибках?
-            messageService.update(entityMessage, validateResult);
+            messageService.update(messageEntity, validateResult, receivedMsg.getMessageId());
             return;
         }
 
-        String text = messageSource.getMessage(MessageKeys.WAIT, null, Locales.find(chat.getLocale()));
+        String text = messageSource.getMessage(MessageKeys.WAIT, null, messageService.getLocale(messageEntity));
         Message initMessage = sendMsg(receivedMsg.getChat(), text);
         if (initMessage != null) {
-            messageService.update(entityMessage, MessageResult.WAIT);
+            messageService.update(messageEntity, MessageResult.WAIT, initMessage.getMessageId());
         } else {
-            messageService.update(entityMessage, MessageResult.SEND_ERROR);
+            messageService.update(messageEntity, MessageResult.SEND_ERROR, null);
             logger.error("Cant send init message");
             return;
         }
 
         List<Recognizer> recognizers = recognizeFactory.create(voice.getDuration());
-        String from = FromBuilder.create(receivedMsg).setItalic().get();
 
         CompletableFuture
                 .supplyAsync(() -> executeFile(voice), service)
                 .thenApply(file -> new Recognize(file, recognizers).get())
-                .thenAccept(result -> updateResult(entityMessage, initMessage, from, result.getKey(), result.getValue()));
-
+                .thenAccept(result -> updateResult(messageEntity, result.getKey(), result.getValue()));
     }
 
-    // разделить на два метода, отправку, и обновление ентити
-    private void updateResult(MessageEntity entity, Message initMessage, String from, String text, RecognizerType recognizerType) {
+    private void updateResult(MessageEntity messageEntity, String text, RecognizerType recognizerType) {
+
+        String from = FromBuilder.create(messageEntity.getUser()).setItalic().get();
+
+        EditMessageText editMessage = new EditMessageText();
+        editMessage.enableMarkdown(true);
+        editMessage.setChatId(messageEntity.getChat().getTelegramId());
+        editMessage.setMessageId(messageEntity.getTelegramId());
+        boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
+        editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
+        if (turnRating && recognizeSuccessfully) {
+            InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();// делать по настройке
+            InlineKeyboardButton dislike = new InlineKeyboardButton("\uD83D\uDC4E").setCallbackData("-1");
+            InlineKeyboardButton like = new InlineKeyboardButton("\uD83D\uDC4D").setCallbackData("1");
+            editMessage.setText(from + text + "\n\n _" + messageSource.getMessage("give.rating", null, messageService.getLocale(messageEntity)) + ":_");
+            replyMarkup.getKeyboard().add(Lists.newArrayList(dislike, like));
+            editMessage.setReplyMarkup(replyMarkup);
+        }
         try {
-            EditMessageText editMessage = new EditMessageText();
-            editMessage.enableMarkdown(true);
-            editMessage.setChatId(initMessage.getChatId());
-            editMessage.setMessageId(initMessage.getMessageId());
-            boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
-            editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
-            if (turnRating && recognizeSuccessfully) {
-                InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();// делать по настройке
-                InlineKeyboardButton dislike = new InlineKeyboardButton("\uD83D\uDC4E").setCallbackData("-1");
-                InlineKeyboardButton like = new InlineKeyboardButton("\uD83D\uDC4D").setCallbackData("1");
-                editMessage.setText(from + text + "\n\n _" + messageSource.getMessage("give.rating", null, Locales.find(entity.getChat().getLocale())) + ":_");
-                replyMarkup.getKeyboard().add(Lists.newArrayList(dislike, like));
-                editMessage.setReplyMarkup(replyMarkup);
-            }
             execute(editMessage);
-            messageService.updateSuccess(entity, recognizerType, editMessage.getMessageId());
+            messageService.updateSuccess(messageEntity, recognizerType, editMessage.getMessageId());
         } catch (TelegramApiException e) {
             logger.error(String.format("Cant send message %s", e.toString()), e);
-            messageService.update(entity, MessageResult.CANT_UPDATE);
+            messageService.update(messageEntity, MessageResult.CANT_UPDATE, editMessage.getMessageId());
+        }
+    }
+
+    private void updateRating(MessageEntity messageEntity, int countLike, int countDis) {
+        if (!turnRating) {
+            return;
+        }
+
+        ChatEntity chatEntity = chatService.require(messageEntity.getChat().getId());
+        EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
+        editMessageReplyMarkup.setChatId(chatEntity.getTelegramId());
+        editMessageReplyMarkup.setMessageId(messageEntity.getTelegramId());
+
+        InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();
+        InlineKeyboardButton dislike = new InlineKeyboardButton("\uD83D\uDC4E" + (countDis > 0 ? countDis : "")).setCallbackData("-1");
+        InlineKeyboardButton like = new InlineKeyboardButton("\uD83D\uDC4D" + (countLike > 0 ? countLike : "")).setCallbackData("1");
+        replyMarkup.getKeyboard().add(Lists.newArrayList(dislike, like));
+        editMessageReplyMarkup.setReplyMarkup(replyMarkup);
+        try {
+            execute(editMessageReplyMarkup);
+        } catch (TelegramApiException e) {
+            logger.error(String.format("Cant update rating message %s", e.toString()), e);
         }
     }
 

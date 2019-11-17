@@ -9,7 +9,7 @@ public class FixtureHelper {
 
     public static ChatEntity createChat() {
         ChatEntity chatEntity = new ChatEntity();
-        chatEntity.setChatId(1L);
+        chatEntity.setTelegramId(1L);
         chatEntity.setUserName("some");
         chatEntity.setFirstName("fn");
         chatEntity.setLastName("ln");

@@ -1,5 +1,6 @@
 package ru.chernyshev.recognizer.service;
 
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +14,15 @@ import ru.chernyshev.recognizer.entity.UserEntity;
 import ru.chernyshev.recognizer.repository.LikeRepository;
 import ru.chernyshev.recognizer.repository.MessageRepository;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+
 @Service
 public class MessageRatingService {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageRatingService.class);
+    private static final long MIN_MILLIS_FOR_UPDATE = 1_000;
 
     private final LikeRepository likeRepository;
     private final MessageRepository messageRepository;
@@ -31,7 +37,7 @@ public class MessageRatingService {
 
     @Transactional
     public LikeEntity addLike(Message message, User user, int rating) {
-        MessageEntity messageEntity = messageRepository.findByTelegramIdAndChat_ChatId(message.getMessageId(), message.getChatId());
+        MessageEntity messageEntity = messageRepository.findByTelegramIdAndChat_TelegramId(message.getMessageId(), message.getChatId());
         if (messageEntity == null) {
             return null;
         }
@@ -42,8 +48,8 @@ public class MessageRatingService {
                 .findFirst().orElse(null);
 
         if (likeEntity != null) {
-            logger.info("MessageId {}, by {}, update rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
-            if (likeEntity.getRating() != rating) {
+            if (canUpdate(likeEntity, rating)) {
+                logger.info("MessageId {}, by {}, update rating {}", messageEntity.getId(), messageEntity.getRecognizerType(), rating);
                 likeEntity.setRating(rating);
                 likeEntity = likeRepository.save(likeEntity);
                 logRating(likeEntity.getMessage());
@@ -62,6 +68,27 @@ public class MessageRatingService {
         likeRepository.save(like);
         logRating(like.getMessage());
         return like;
+    }
+
+    public Map<String, Integer> getRating(MessageEntity message) {
+        Integer disCount = likeRepository.count(message.getId(), -1);
+        Integer likeCount = likeRepository.count(message.getId(), 1);
+        return ImmutableMap.of("dis", disCount, "like", likeCount);
+    }
+
+    private boolean canUpdate(LikeEntity likeEntity, int rating) {
+        if (likeEntity.getRating() == rating) {
+            return false;
+        }
+        if (likeEntity.getUpdated() == null) {
+            return true;
+        }
+        long secondsFromLastUpdate = likeEntity.getUpdated().until(LocalDateTime.now(), ChronoUnit.MILLIS);
+        if (secondsFromLastUpdate < MIN_MILLIS_FOR_UPDATE) {
+            logger.warn("MessageId {} update rating too fast", likeEntity.getMessage().getId());
+            return false;
+        }
+        return true;
     }
 
     private void logRating(MessageEntity message) {

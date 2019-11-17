@@ -7,7 +7,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "LIKES")
-public class LikeEntity {//} extends AbstractTimestampEntity {
+public class LikeEntity extends AbstractTimestampEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE,

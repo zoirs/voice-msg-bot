@@ -1,0 +1,25 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.6.0">
+
+        <sql>
+            ALTER TABLE public.messages
+            ADD COLUMN fk_user bigint;
+
+            ALTER TABLE public.messages
+            ADD FOREIGN KEY (fk_user)
+            REFERENCES public.users (id) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION;
+
+            ALTER TABLE public.likes
+            ADD COLUMN created timestamp(6) without time zone;
+
+            ALTER TABLE public.likes
+            ADD COLUMN updated timestamp(6) without time zone;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

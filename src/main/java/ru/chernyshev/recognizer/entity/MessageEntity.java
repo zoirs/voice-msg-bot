@@ -27,6 +27,10 @@ public class MessageEntity extends AbstractTimestampEntity {
     @JoinColumn(name = "fk_chat")
     private ChatEntity chat;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fk_user")
+    private UserEntity user;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private MessageResult result = MessageResult.PREPARE;
@@ -47,6 +51,14 @@ public class MessageEntity extends AbstractTimestampEntity {
 
     public MessageResult getResult() {
         return result;
+    }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 
     public void setResult(MessageResult result) {
