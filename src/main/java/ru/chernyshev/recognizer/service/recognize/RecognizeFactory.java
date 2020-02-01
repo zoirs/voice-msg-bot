@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,7 +36,7 @@ public class RecognizeFactory {
         List<Recognizer> applicableRecognizers = activeRecognizers.stream()
                 .filter(r -> r.isApplicable(duration))
                 .collect(Collectors.toList());
-        Collections.shuffle(applicableRecognizers);
+//        Collections.shuffle(applicableRecognizers);
         return applicableRecognizers;
     }
 }
