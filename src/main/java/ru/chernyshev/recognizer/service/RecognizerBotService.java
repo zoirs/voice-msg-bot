@@ -32,6 +32,8 @@ import ru.chernyshev.recognizer.utils.FromBuilder;
 import ru.chernyshev.recognizer.utils.MessageKeys;
 
 import java.io.File;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -55,6 +57,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final MessageRatingService ratingService;
 
     private final boolean turnRating;
+    private final String donatUrl;
 
     @Autowired
     public RecognizerBotService(RecognizeFactory recognizeFactory,
@@ -65,7 +68,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                                 MessageValidator messageValidator,
                                 MessageSource messageSource,
                                 MessageRatingService ratingService,
-                                @Value("${app.rating}") boolean turnRating) {
+                                @Value("${app.rating}") boolean turnRating,
+                                @Value("${give.donat.url}") String donatUrl) {
         this.recognizeFactory = recognizeFactory;
         this.botToken = botToken;
         this.botUsername = botUsername;
@@ -75,6 +79,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         this.messageSource = messageSource;
         this.ratingService = ratingService;
         this.turnRating = turnRating;
+        this.donatUrl = donatUrl;
     }
 
     @Override
@@ -155,13 +160,23 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         editMessage.setMessageId(messageEntity.getTelegramId());
         boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
         editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
-        if (turnRating && recognizeSuccessfully) {
-            InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();// делать по настройке
-            InlineKeyboardButton dislike = new InlineKeyboardButton("\uD83D\uDC4E").setCallbackData("-1");
-            InlineKeyboardButton like = new InlineKeyboardButton("\uD83D\uDC4D").setCallbackData("1");
-            editMessage.setText(from + text + "\n\n _" + messageSource.getMessage("give.rating", null, messageService.getLocale(messageEntity)) + ":_");
-            replyMarkup.getKeyboard().add(Lists.newArrayList(dislike, like));
-            editMessage.setReplyMarkup(replyMarkup);
+        if (recognizeSuccessfully) {
+            if (turnRating) {
+                InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();// делать по настройке
+                InlineKeyboardButton dislike = new InlineKeyboardButton("\uD83D\uDC4E").setCallbackData("-1");
+                InlineKeyboardButton like = new InlineKeyboardButton("\uD83D\uDC4D").setCallbackData("1");
+                editMessage.setText(from + text + "\n\n _" + messageSource.getMessage("give.rating", null, messageService.getLocale(messageEntity)) + ":_");
+                replyMarkup.getKeyboard().add(Lists.newArrayList(dislike, like));
+                editMessage.setReplyMarkup(replyMarkup);
+            } else if (!StringUtils.isEmpty(donatUrl)) {
+                if (LocalDate.now().getDayOfWeek() == DayOfWeek.SATURDAY) {
+                    InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();
+                    String giveDonateMsg = messageSource.getMessage("give.donate", null, messageService.getLocale(messageEntity));
+                    InlineKeyboardButton donate = new InlineKeyboardButton(giveDonateMsg).setUrl(donatUrl);
+                    replyMarkup.getKeyboard().add(Lists.newArrayList(donate));
+                    editMessage.setReplyMarkup(replyMarkup);
+                }
+            }
         }
         try {
             execute(editMessage);
