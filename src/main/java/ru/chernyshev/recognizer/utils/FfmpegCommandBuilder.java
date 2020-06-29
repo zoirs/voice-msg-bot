@@ -41,7 +41,7 @@ public class FfmpegCommandBuilder {
     public File execute() {
         try {
             Process start = processBuilder.start();
-            start.waitFor(1, TimeUnit.SECONDS);
+            start.waitFor(30, TimeUnit.SECONDS);
         } catch (IOException e) {
             logger.error("Cant run ffmpeg process", e);
             return null;
