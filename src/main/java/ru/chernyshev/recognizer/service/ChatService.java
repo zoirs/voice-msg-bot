@@ -34,6 +34,16 @@ public class ChatService {
         this.messageRepository = messageRepository;
     }
 
+    public void banned(Chat chat) {
+        ChatEntity chatEntity = chatRepository.findByTelegramId(chat.getId());
+        if (chatEntity == null) {
+            return;
+        }
+        chatEntity.setState(ChatStatus.BANNED);
+        chatRepository.save(chatEntity);
+        logger.info("Chat {}, {} was banned", chat.getId(), chat.getTitle());
+    }
+
     public ChatEntity getOrCreate(Chat chat) {
         ChatEntity chatEntity = chatRepository.findByTelegramId(chat.getId());
         if (chatEntity == null) {

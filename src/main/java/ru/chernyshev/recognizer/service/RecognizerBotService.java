@@ -222,6 +222,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return execute(message);
         } catch (TelegramApiException e) {
             logger.error(String.format("Cant send message to chat %s %s, error %s", chat.getId(), chat.getTitle(), e.toString()), e);
+            if (e.toString().contains("have no rights to send a message")) {
+                chatService.banned(chat);
+            }
         }
         return null;
     }
