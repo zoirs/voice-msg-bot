@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.6.RELEASE</version>
+		<version>2.3.5.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>ru.chernyshev</groupId>
 	<artifactId>yandex-speechkit</artifactId>
-	<version>0.6.3</version>
+	<version>0.7.0</version>
 	<name>yandex-speechkit</name>
 	<description>Speech bot</description>
 
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>org.telegram</groupId>
 			<artifactId>telegrambots</artifactId>
-			<version>4.9.1</version>
+			<version>5.2.0</version>
 		</dependency>
 
 		<dependency>
@@ -58,11 +58,11 @@
 			<version>1.46</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
-			<version>3.6.3</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.liquibase</groupId>-->
+<!--			<artifactId>liquibase-core</artifactId>-->
+<!--			<version>3.6.3</version>-->
+<!--		</dependency>-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

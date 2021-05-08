@@ -37,11 +37,11 @@ public class MessageValidator {
             return MessageResult.BANNED;
         }
 
-        Long messageToday = chatService.getMessagesToday(chat);
-        if (messageToday > MAX_MESSAGES_PER_DAY) {
-            logger.info("Chat {} send {} today", chat.getId(), messageToday);
-            return MessageResult.VOICE_MSG_TOO_MUCH_TODAY;
-        }
+//        Long messageToday = chatService.getMessagesToday(chat);
+//        if (messageToday > MAX_MESSAGES_PER_DAY) {
+//            logger.info("Chat {} send {} today", chat.getId(), messageToday);
+//            return MessageResult.VOICE_MSG_TOO_MUCH_TODAY;
+//        }
 
         Integer duration = voice.getDuration();
         if (duration > MAX_SECONDS) {

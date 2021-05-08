@@ -17,7 +17,7 @@ public class UserEntity {//extends AbstractTimestampEntity {
     private Long id;
 
     @Column
-    private Integer telegramId;
+    private Long telegramId;
     @Column
     private String userName;
     @Column
@@ -33,11 +33,11 @@ public class UserEntity {//extends AbstractTimestampEntity {
         this.id = id;
     }
 
-    public Integer getTelegramId() {
+    public Long getTelegramId() {
         return telegramId;
     }
 
-    public void setTelegramId(Integer telegramId) {
+    public void setTelegramId(Long telegramId) {
         this.telegramId = telegramId;
     }
 
