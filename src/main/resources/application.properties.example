@@ -35,3 +35,7 @@ give.donat.url=
 spring.jpa.properties.hibernate.session.events.log.LOG_QUERIES_SLOWER_THAN_MS=1000
 spring.jpa.properties.org.hibernate.SQL_SLOW=INFO
 logging.level.org.hibernate.SQL_SLOW=INFO
+
+rest.connection.timeout=
+rest.read.timeout=
+rest.connect.timeout=

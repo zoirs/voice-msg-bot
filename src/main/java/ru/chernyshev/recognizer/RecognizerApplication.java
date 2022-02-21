@@ -2,11 +2,13 @@ package ru.chernyshev.recognizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -34,8 +36,15 @@ public class RecognizerApplication {
     }
 
     @Bean
-    public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
+    public RestTemplate restTemplate(@Value("${rest.connection.timeout}") int connectionTimeout,
+                                     @Value("${rest.read.timeout}") int readTimeout,
+                                     @Value("${rest.connect.timeout}") int connectTimeout) {
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setConnectionRequestTimeout(connectionTimeout);
+        requestFactory.setReadTimeout(readTimeout);
+        requestFactory.setConnectTimeout(connectTimeout);
+
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         restTemplate.setErrorHandler(new ErrorHandler());
         return restTemplate;
     }

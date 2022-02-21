@@ -16,7 +16,7 @@ public class ChatEntity extends AbstractTimestampEntity {
             sequenceName = "seq_chat", allocationSize = 1)
     private Long id;
 
-    @Column(name = "chat_id",nullable = false, unique = true)
+    @Column(name = "telegram_id",nullable = false, unique = true)
     private Long telegramId;
 
     @Column
@@ -37,9 +37,6 @@ public class ChatEntity extends AbstractTimestampEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ChatStatus state;
-
-    @OneToMany(mappedBy = "chat")
-    private List<MessageEntity> chatMessages; //бессмысленное поле
 
     public String getFirstName() {
         return firstName;
@@ -71,14 +68,6 @@ public class ChatEntity extends AbstractTimestampEntity {
 
     public void setTelegramId(Long telegramId) {
         this.telegramId = telegramId;
-    }
-
-    public List<MessageEntity> getChatMessages() {
-        return chatMessages;
-    }
-
-    public void setChatMessages(List<MessageEntity> chatMessages) {
-        this.chatMessages = chatMessages;
     }
 
     public Long getId() {
