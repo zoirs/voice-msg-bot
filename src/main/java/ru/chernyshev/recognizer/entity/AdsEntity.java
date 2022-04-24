@@ -1,5 +1,7 @@
 package ru.chernyshev.recognizer.entity;
 
+import ru.chernyshev.recognizer.model.AdsType;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -26,43 +28,66 @@ public class AdsEntity {
     @Column(name = "text")
     private String text;
 
-    public Long getId() {
-        return id;
+    @Column(name = "file_path")
+    private String filePath;
+
+    @Column(name = "max_count")
+    private Long maxCount;
+
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
+    private AdsType type;
+
+    @Column(name = "test_chat_id")
+    private Long testChatId;
+
+
+    public AdsEntity() {
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public AdsEntity(LocalDateTime start, LocalDateTime finish, String url, String text, String filePath, Long maxCount, AdsType type) {
+        this.start = start;
+        this.finish = finish;
+        this.url = url;
+        this.text = text;
+        this.filePath = filePath;
+        this.maxCount = maxCount;
+        this.type = type;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public LocalDateTime getStart() {
         return start;
     }
 
-    public void setStart(LocalDateTime start) {
-        this.start = start;
-    }
-
     public LocalDateTime getFinish() {
         return finish;
-    }
-
-    public void setFinish(LocalDateTime finish) {
-        this.finish = finish;
     }
 
     public String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     public String getText() {
         return text;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public Long getMaxCount() {
+        return maxCount;
+    }
+
+    public AdsType getType() {
+        return type;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public Long getTestChatId() {
+        return testChatId;
     }
 }

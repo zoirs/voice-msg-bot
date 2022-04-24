@@ -36,9 +36,8 @@ public class ReposTest {
         ChatEntity s = new ChatEntity();
         s.setTelegramId(1L);
         s.setState(ChatStatus.ACTIVE);
-        ChatEntity genericEntity = chatRepository
-                .save(s);
-        ChatEntity foundEntity = chatRepository.findByTelegramId(genericEntity.getId());
+        chatRepository.save(s);
+        ChatEntity foundEntity = chatRepository.findByTelegramId(s.getTelegramId());
 
         assertNotNull(foundEntity);
     }

@@ -12,26 +12,22 @@ import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.Voice;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
-import ru.chernyshev.recognizer.model.AdsButton;
-import ru.chernyshev.recognizer.model.MessageResult;
-import ru.chernyshev.recognizer.model.Recognize;
-import ru.chernyshev.recognizer.model.RecognizerType;
+import ru.chernyshev.recognizer.model.*;
 import ru.chernyshev.recognizer.service.recognize.RecognizeFactory;
 import ru.chernyshev.recognizer.service.recognize.Recognizer;
 import ru.chernyshev.recognizer.utils.FromBuilder;
 import ru.chernyshev.recognizer.utils.MessageKeys;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +38,7 @@ import java.util.concurrent.Executors;
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
+    private static final String LINK_PATTERN = "$link$";
 
     private final ExecutorService service = Executors.newFixedThreadPool(4);
 
@@ -52,6 +49,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final MessageService messageService;
     private final MessageValidator messageValidator;
     private final MessageSource messageSource;
+    private final UserService userService;
     private final AdsService adsService;
 
     @Autowired
@@ -62,6 +60,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                                 MessageService messageService,
                                 MessageValidator messageValidator,
                                 MessageSource messageSource,
+                                UserService userService,
                                 AdsService adsService) {
         this.recognizeFactory = recognizeFactory;
         this.botToken = botToken;
@@ -70,13 +69,64 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         this.messageService = messageService;
         this.messageValidator = messageValidator;
         this.messageSource = messageSource;
+        this.userService = userService;
         this.adsService = adsService;
+    }
+
+    void sendDirectMessage(AdsButton adsEntity, Long telegramChatId) {
+        if (adsEntity == null || adsEntity.getType() != AdsType.DIRECT || adsEntity.getFilePath() == null) {
+            return;
+        }
+        if (adsEntity.getUrl() == null) {
+            logger.warn("Ads link is empty");
+            return;
+        }
+        if (!adsEntity.getText().contains(LINK_PATTERN)) {
+            logger.warn("Ads text no places for ads link");
+            return;
+        }
+        File image = new File(adsEntity.getFilePath());
+        if (!Files.exists(image.toPath())) {
+            logger.warn("File {} not exist", image);
+            return;
+        }
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setPhoto(new InputFile(image));
+
+        sendPhoto.setChatId(String.valueOf(telegramChatId));// 268305576
+
+
+        sendPhoto.setParseMode("MarkdownV2");
+        String encodedUrl = adsEntity.getUrl().replaceAll("\\.", "\\\\.");
+        String text = adsEntity.getText().replace(LINK_PATTERN, encodedUrl);
+        sendPhoto.setCaption(text);
+        try {
+            execute(sendPhoto); // Call method to send the message
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         Message receivedMsg = update.getMessage();
         if (receivedMsg == null) { // Обычно, это редактирование сообщения
+            return;
+        }
+
+        if (receivedMsg.getEntities() != null
+                && receivedMsg.getEntities().stream().anyMatch(q -> "bot_command".equalsIgnoreCase(q.getType()) && "/start".equalsIgnoreCase(q.getText()))) {
+            logger.info("New user/chat add bot");
+            User from = receivedMsg.getFrom();
+            if (from != null) {
+                logger.info("New user add bot {}", from);
+                userService.getOrCreate(from);
+            }
+            Chat chat = receivedMsg.getChat();
+            if (chat != null) {
+                logger.info("New chat add bot {}", chat);
+                chatService.getOrCreate(chat);
+            }
             return;
         }
 
@@ -132,7 +182,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
         if (recognizeSuccessfully) {
             AdsButton current = adsService.getCurrent();
-            if (current != null) {
+            if (current != null && current.getType() == AdsType.RECOGNIZER_MESSAGE) {
                 InlineKeyboardButton adsButton = new InlineKeyboardButton(current.getText());
                 adsButton.setUrl(current.getUrl());
                 List<List<InlineKeyboardButton>> keyBoard = new ArrayList<>();

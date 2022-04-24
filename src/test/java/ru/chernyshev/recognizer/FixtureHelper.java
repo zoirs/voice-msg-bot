@@ -1,21 +1,24 @@
 package ru.chernyshev.recognizer;
 
+import com.google.common.base.MoreObjects;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.entity.UserEntity;
 import ru.chernyshev.recognizer.model.ChatStatus;
 
+import javax.annotation.Nullable;
+
 public class FixtureHelper {
 
-    public static ChatEntity createChat() {
+    public static ChatEntity createChat(long chatId, @Nullable String groupType) {
         ChatEntity chatEntity = new ChatEntity();
-        chatEntity.setTelegramId(1L);
-        chatEntity.setUserName("some");
+        chatEntity.setTelegramId(chatId);
+        chatEntity.setUserName("user_" + chatId);
         chatEntity.setFirstName("fn");
         chatEntity.setLastName("ln");
-        chatEntity.setGroupType("s");
+        chatEntity.setGroupType(MoreObjects.firstNonNull(groupType, getGroupType(chatId)));
         chatEntity.setState(ChatStatus.ACTIVE);
-        chatEntity.setGroupName("t");
+        chatEntity.setGroupName(getGroupType(chatId) + "_name");
         return chatEntity;
     }
 
@@ -33,5 +36,18 @@ public class FixtureHelper {
         from.setUserName("sw");
         from.setLastName("sd");
         return from;
+    }
+
+    private static String getGroupType(long chatId) {
+        int l = (int) (chatId % 3);
+        switch (l) {
+            case 0:
+                return "supergroup";
+            case 1:
+                return "private";
+            case 2:
+                return "group";
+        }
+        return "group";
     }
 }

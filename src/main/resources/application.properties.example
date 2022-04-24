@@ -36,3 +36,5 @@ logging.level.org.hibernate.SQL_SLOW=INFO
 rest.connection.timeout=
 rest.read.timeout=
 rest.connect.timeout=
+
+ads.batch.size=

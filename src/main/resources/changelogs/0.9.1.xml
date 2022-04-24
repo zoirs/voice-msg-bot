@@ -1,0 +1,26 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis (generated)" id="0.9.1">
+
+        <createSequence sequenceName="seq_ads_direct"/>
+
+        <sql>
+            create table ADS_DIRECT
+            (
+            id bigint not null,
+            ads_id bigint not null
+            constraint ADS_DIRECT_ads_id_fk
+            references ads (id),
+            chat_id bigint not null
+            constraint ADS_DIRECT_chats_id_fk
+            references chats
+            );
+
+            create unique index ADS_DIRECT_id_uindex
+            on ADS_DIRECT (id);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

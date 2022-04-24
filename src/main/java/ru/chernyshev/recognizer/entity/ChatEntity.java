@@ -86,7 +86,6 @@ public class ChatEntity extends AbstractTimestampEntity {
         this.userName = userName;
     }
 
-
     public ChatStatus getState() {
         return state;
     }

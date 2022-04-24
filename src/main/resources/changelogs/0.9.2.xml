@@ -1,0 +1,14 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis (generated)" id="0.9.2">
+
+        <sql>
+            create unique index ads_direct_chat_id_ads_id_uindex
+            on ads_direct (chat_id, ads_id);
+        </sql>
+
+    </changeSet>
+</databaseChangeLog>
