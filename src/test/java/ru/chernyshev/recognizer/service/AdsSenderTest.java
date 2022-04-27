@@ -3,8 +3,11 @@ package ru.chernyshev.recognizer.service;
 import com.google.common.collect.Streams;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -39,6 +42,8 @@ import java.util.*;
         DirtiesContextTestExecutionListener.class})
 public class AdsSenderTest {
 
+    private static final Logger logger = LoggerFactory.getLogger(AdsSenderTest.class);
+
     @Autowired
     AdsSenderService adsSenderService;
     @Autowired
@@ -71,11 +76,13 @@ public class AdsSenderTest {
         }
     }
 
-    @After
-    public void after() {
+    @Before
+    public void before() {
+        logger.info("Before test start");
         chatRepository.deleteAll();
         adsRepository.deleteAll();
         adsDirectRepository.deleteAll();
+        logger.info("db is clear");
     }
 
     @Test
