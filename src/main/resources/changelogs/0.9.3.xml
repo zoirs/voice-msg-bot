@@ -1,0 +1,18 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.9.3">
+
+        <sql>
+            alter table messages
+            add show_ads_id bigint;
+
+            alter table messages
+            add constraint messages_ads_id_fk
+            foreign key (show_ads_id) references ads;
+        </sql>
+
+    </changeSet>
+</databaseChangeLog>

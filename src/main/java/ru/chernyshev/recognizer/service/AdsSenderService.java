@@ -49,7 +49,7 @@ public class AdsSenderService {
         adsService.checkTask();
         AdsButton current = adsService.getCurrent();
         if (current == null || current.getType() != AdsType.DIRECT) {
-            logger.info("No ads task. ADS send complete");
+            logger.info("No active ads DIRECT task.");
             return;
         }
 

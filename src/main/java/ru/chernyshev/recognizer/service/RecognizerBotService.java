@@ -182,13 +182,14 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
         if (recognizeSuccessfully) {
             AdsButton current = adsService.getCurrent();
-            if (current != null && current.getType() == AdsType.RECOGNIZER_MESSAGE) {
+            if (isNeedShowAds(messageEntity.getChat(), current)) {
                 InlineKeyboardButton adsButton = new InlineKeyboardButton(current.getText());
                 adsButton.setUrl(current.getUrl());
                 List<List<InlineKeyboardButton>> keyBoard = new ArrayList<>();
                 keyBoard.add(Lists.newArrayList(adsButton));
                 InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(keyBoard);
                 editMessage.setReplyMarkup(replyMarkup);
+                messageEntity.setShowAdsId(current.getId());
             }
         }
         try {
@@ -218,6 +219,11 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             }
         }
         return null;
+    }
+
+    private boolean isNeedShowAds(ChatEntity chat, AdsButton current) {
+        return current != null && current.getType() == AdsType.RECOGNIZER_MESSAGE
+                && (current.getTestChatId() == null || chat.getId().equals(current.getTestChatId()));
     }
 
     private File executeFile(Voice voice) {
