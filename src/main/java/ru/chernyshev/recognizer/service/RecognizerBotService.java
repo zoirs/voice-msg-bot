@@ -98,7 +98,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         sendPhoto.setParseMode("MarkdownV2");
         String encodedUrl = adsEntity.getUrl().replaceAll("\\.", "\\\\.");
-        String text = adsEntity.getText().replace(LINK_PATTERN, encodedUrl);
+        String text = adsEntity.getText()
+                .replaceAll("\\.", "\\\\.")
+                .replace(LINK_PATTERN, encodedUrl);
         sendPhoto.setCaption(text);
         try {
             execute(sendPhoto); // Call method to send the message
