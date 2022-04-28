@@ -1,5 +1,6 @@
 package ru.chernyshev.recognizer;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,11 @@ public class ReposTest {
 
     @Autowired
     ChatRepository chatRepository;
+
+    @Before
+    public void before() {
+        chatRepository.deleteAll();
+    }
 
     @Test
     public void givenGenericEntityRepository_whenSaveAndRetreiveEntity_thenOK() {
