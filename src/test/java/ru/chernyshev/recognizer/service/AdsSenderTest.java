@@ -1,7 +1,6 @@
 package ru.chernyshev.recognizer.service;
 
 import com.google.common.collect.Streams;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +32,7 @@ import ru.chernyshev.recognizer.repository.ChatRepository;
 
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @RunWith(SpringRunner.class)
@@ -61,6 +61,8 @@ public class AdsSenderTest {
 
         @Value("${ads.batch.size}")
         private int batchSize;
+        @Value("${ads.direct.max.count.per.second}")
+        private int maxMessagePerSecond;
 
         @MockBean
         RecognizerBotService recognizerBotService;
@@ -72,7 +74,7 @@ public class AdsSenderTest {
 
         @Bean
         public AdsSenderService adsSenderService(AdsDirectRepository adsDirectRepository, AdsService adsService, ChatRepository chatRepository) {
-            return new AdsSenderService(recognizerBotService, adsService, adsDirectRepository, chatRepository, batchSize);
+            return new AdsSenderService(recognizerBotService, adsService, adsDirectRepository, chatRepository, batchSize, maxMessagePerSecond);
         }
     }
 
@@ -87,7 +89,7 @@ public class AdsSenderTest {
 
     @Test
     public void addTaskCheck() {
-        AdsEntity s = createAdsTask();
+        AdsEntity s = createAdsTask(13L);
         adsRepository.save(s);
 
         adsService.checkTask();
@@ -100,7 +102,7 @@ public class AdsSenderTest {
         Iterable<AdsDirectEntity> wasSend = adsDirectRepository.findAll();
         Assert.assertFalse(wasSend.iterator().hasNext());
 
-        AdsEntity ads = createAdsTask();
+        AdsEntity ads = createAdsTask(13L);
         adsRepository.save(ads);
 
         List<ChatEntity> chats = generateChats(100, null);
@@ -125,7 +127,7 @@ public class AdsSenderTest {
         Iterable<AdsDirectEntity> wasSend = adsDirectRepository.findAll();
         Assert.assertFalse(wasSend.iterator().hasNext());
 
-        AdsEntity ads = createAdsTask();
+        AdsEntity ads = createAdsTask(13L);
         adsRepository.save(ads);
 
         List<ChatEntity> chats = generateChats(7, "private");
@@ -149,7 +151,7 @@ public class AdsSenderTest {
         Iterable<AdsDirectEntity> wasSend = adsDirectRepository.findAll();
         Assert.assertFalse(wasSend.iterator().hasNext());
 
-        AdsEntity ads = createAdsTask();
+        AdsEntity ads = createAdsTask(13L);
         adsRepository.save(ads);
 
         List<ChatEntity> chats = generateChats(7, "private");
@@ -159,8 +161,8 @@ public class AdsSenderTest {
         adsRepository.save(completeAdsTask);
 
         long completeTaskId = completeAdsTask.getId();
-        adsDirectRepository.save(new AdsDirectEntity(completeTaskId, chats.get(0).getId()));
-        adsDirectRepository.save(new AdsDirectEntity(completeTaskId, chats.get(1).getId()));
+        adsDirectRepository.save(new AdsDirectEntity(completeTaskId, chats.get(0).getId(), true));
+        adsDirectRepository.save(new AdsDirectEntity(completeTaskId, chats.get(1).getId(), true));
 
         Assert.assertTrue(ads.getMaxCount() > chats.size());
 
@@ -172,6 +174,21 @@ public class AdsSenderTest {
 
     }
 
+    @Test
+    public void checkLimitRate() {
+        AdsEntity ads = createAdsTask(120L);
+        adsRepository.save(ads);
+
+        List<ChatEntity> chats = generateChats(120, "private");
+        chatRepository.saveAll(chats);
+
+        LocalDateTime before = LocalDateTime.now();
+        adsSenderService.checkNeedSend();
+        long seconds = before.until(LocalDateTime.now(), ChronoUnit.SECONDS );
+        logger.debug("test check limit rate: {}", seconds);
+        Assert.assertTrue(seconds > 20);
+    }
+
     private List<ChatEntity> generateChats(int count, @Nullable String groupType) {
         List<ChatEntity> chats = new ArrayList<>();
         for (int i = 0; i < count; i++) {
@@ -180,8 +197,8 @@ public class AdsSenderTest {
         return chats;
     }
 
-    private AdsEntity createAdsTask() {
-        return new AdsEntity(LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(1), "ya.ru", "some", null, 13L, AdsType.DIRECT);
+    private AdsEntity createAdsTask(Long maxCount) {
+        return new AdsEntity(LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(1), "ya.ru", "some", null, maxCount, AdsType.DIRECT);
     }
 
     private AdsEntity createCompleteAdsTask() {

@@ -27,7 +27,6 @@ import ru.chernyshev.recognizer.utils.FromBuilder;
 import ru.chernyshev.recognizer.utils.MessageKeys;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +37,6 @@ import java.util.concurrent.Executors;
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
-    private static final String LINK_PATTERN = "$link$";
 
     private final ExecutorService service = Executors.newFixedThreadPool(4);
 
@@ -71,42 +69,6 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         this.messageSource = messageSource;
         this.userService = userService;
         this.adsService = adsService;
-    }
-
-    void sendDirectMessage(AdsButton adsEntity, Long telegramChatId) {
-        if (adsEntity == null || adsEntity.getType() != AdsType.DIRECT || adsEntity.getFilePath() == null) {
-            return;
-        }
-        if (adsEntity.getUrl() == null) {
-            logger.warn("Ads link is empty");
-            return;
-        }
-        if (!adsEntity.getText().contains(LINK_PATTERN)) {
-            logger.warn("Ads text no places for ads link");
-            return;
-        }
-        File image = new File(adsEntity.getFilePath());
-        if (!Files.exists(image.toPath())) {
-            logger.warn("File {} not exist", image);
-            return;
-        }
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setPhoto(new InputFile(image));
-
-        sendPhoto.setChatId(String.valueOf(telegramChatId));// 268305576
-
-
-        sendPhoto.setParseMode("MarkdownV2");
-        String encodedUrl = adsEntity.getUrl().replaceAll("\\.", "\\\\.");
-        String text = adsEntity.getText()
-                .replaceAll("\\.", "\\\\.")
-                .replace(LINK_PATTERN, encodedUrl);
-        sendPhoto.setCaption(text);
-        try {
-            execute(sendPhoto); // Call method to send the message
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -170,6 +132,19 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                 .supplyAsync(() -> executeFile(voice), service)
                 .thenApply(file -> new Recognize(file, recognizers).get())
                 .thenAccept(result -> updateResult(messageEntity, result.getKey(), result.getValue()));
+    }
+
+    boolean sendDirect(SendPhoto sendPhoto) {
+        if (sendPhoto == null) {
+            return false;
+        }
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            logger.error("Cant send direct message ", e);
+            return false;
+        }
+        return true;
     }
 
     private void updateResult(MessageEntity messageEntity, String text, RecognizerType recognizerType) {

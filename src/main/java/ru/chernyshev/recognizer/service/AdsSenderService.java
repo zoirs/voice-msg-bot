@@ -1,5 +1,6 @@
 package ru.chernyshev.recognizer.service;
 
+import com.google.common.util.concurrent.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.chernyshev.recognizer.entity.AdsDirectEntity;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
@@ -16,11 +19,15 @@ import ru.chernyshev.recognizer.model.AdsType;
 import ru.chernyshev.recognizer.repository.AdsDirectRepository;
 import ru.chernyshev.recognizer.repository.ChatRepository;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class AdsSenderService {
+    private static final String LINK_PATTERN = "$link$";
+
     private static final Logger logger = LoggerFactory.getLogger(AdsSenderService.class);
 
     private final Pageable firstPage;
@@ -28,18 +35,21 @@ public class AdsSenderService {
     private final AdsService adsService;
     private final AdsDirectRepository adsDirectRepository;
     private final ChatRepository chatRepository;
+    private final RateLimiter rateLimiter;
 
     @Autowired
     public AdsSenderService(RecognizerBotService recognizerBotService,
                             AdsService adsService,
                             AdsDirectRepository adsDirectRepository,
                             ChatRepository chatRepository,
-                            @Value("${ads.batch.size}") int batchSize) {
+                            @Value("${ads.batch.size}") int batchSize,
+                            @Value("${ads.direct.max.count.per.second}") long maxContMessagePerSecond) {
         this.recognizerBotService = recognizerBotService;
         this.adsService = adsService;
         this.adsDirectRepository = adsDirectRepository;
         this.chatRepository = chatRepository;
         this.firstPage = PageRequest.of(0, batchSize, Sort.by("id"));
+        this.rateLimiter = RateLimiter.create(maxContMessagePerSecond);
     }
 
     @Scheduled(fixedDelay = 1 * 60 * 1000)
@@ -62,8 +72,9 @@ public class AdsSenderService {
                 logger.warn("Error test chat id {}", current.getTestChatId());
                 return;
             }
-            recognizerBotService.sendDirectMessage(current, chatEntity.get().getTelegramId());
-            AdsDirectEntity adsDirectEntity = new AdsDirectEntity(current.getId(), current.getTestChatId());
+            SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.get().getTelegramId());
+            boolean result = recognizerBotService.sendDirect(sendPhoto);
+            AdsDirectEntity adsDirectEntity = new AdsDirectEntity(current.getId(), current.getTestChatId(), result);
             adsDirectRepository.save(adsDirectEntity);
             current.inc();
             return;
@@ -88,8 +99,10 @@ public class AdsSenderService {
                     return;
                 }
                 logger.info("Send to chat {}, telegramId {}", chatEntity.getId(), chatEntity.getTelegramId());
-                recognizerBotService.sendDirectMessage(current, chatEntity.getTelegramId());
-                AdsDirectEntity adsDirectSend = new AdsDirectEntity(current.getId(), chatEntity.getId());
+                SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.getTelegramId());
+                rateLimiter.acquire();
+                boolean result = recognizerBotService.sendDirect(sendPhoto);
+                AdsDirectEntity adsDirectSend = new AdsDirectEntity(current.getId(), chatEntity.getId(), result);
                 adsDirectRepository.save(adsDirectSend);
                 current.inc();
                 lastChatId = adsDirectSend.getChatId();
@@ -99,5 +112,36 @@ public class AdsSenderService {
             }
         }
         logger.info("Complete sending for task {}", current);
+    }
+
+    private SendPhoto prepareAdsMessage(AdsButton adsEntity, Long telegramChatId) {
+        if (adsEntity == null || adsEntity.getType() != AdsType.DIRECT || adsEntity.getFilePath() == null) {
+            return null;
+        }
+        if (adsEntity.getUrl() == null) {
+            logger.warn("Ads link is empty");
+            return null;
+        }
+        if (!adsEntity.getText().contains(LINK_PATTERN)) {
+            logger.warn("Ads text no places for ads link");
+            return null;
+        }
+        File image = new File(adsEntity.getFilePath());
+        if (!Files.exists(image.toPath())) {
+            logger.warn("File {} not exist", image);
+            return null;
+        }
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setPhoto(new InputFile(image));
+
+        sendPhoto.setChatId(String.valueOf(telegramChatId));// 268305576
+
+        sendPhoto.setParseMode("MarkdownV2");
+        String encodedUrl = adsEntity.getUrl().replaceAll("\\.", "\\\\.");
+        String text = adsEntity.getText()
+                .replaceAll("\\.", "\\\\.")
+                .replace(LINK_PATTERN, encodedUrl);
+        sendPhoto.setCaption(text);
+        return sendPhoto;
     }
 }

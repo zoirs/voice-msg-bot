@@ -16,12 +16,15 @@ public class AdsDirectEntity {
     private Long adsId;
     private Long chatId;
 
+    private boolean isSuccess;
+
     public AdsDirectEntity() {
     }
 
-    public AdsDirectEntity(Long adsId, Long chatId) {
+    public AdsDirectEntity(Long adsId, Long chatId, boolean isSuccess) {
         this.adsId = adsId;
         this.chatId = chatId;
+        this.isSuccess = isSuccess;
     }
 
     public Long getId() {
@@ -36,4 +39,7 @@ public class AdsDirectEntity {
         return chatId;
     }
 
+    public boolean isSuccess() {
+        return isSuccess;
+    }
 }

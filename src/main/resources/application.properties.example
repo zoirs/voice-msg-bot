@@ -38,3 +38,4 @@ rest.read.timeout=
 rest.connect.timeout=
 
 ads.batch.size=
+ads.direct.max.count.per.second=

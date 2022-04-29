@@ -32,7 +32,7 @@ public class AdsService {
     }
 
     @Scheduled(fixedDelay = 1 * 60 * 1000)
-    public void checkTask() {
+    public synchronized void checkTask() {
         logger.info("Start finding ads");
         LocalDateTime now = LocalDateTime.now();
         List<AdsEntity> currentTasks = adsRepository.findByStartBeforeAndFinishAfter(now, now);
