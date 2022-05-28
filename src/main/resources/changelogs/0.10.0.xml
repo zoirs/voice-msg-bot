@@ -1,0 +1,33 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.10.0">
+
+        <createSequence sequenceName="seq_ads_sended"/>
+
+        <sql>
+            create table ads_sended
+            (
+                id         bigint not null
+                    constraint ads_sended_pk
+                        primary key,
+                ads_id     bigint not null
+                    constraint ads_sended_ads_id_fk
+                        references ads,
+                chat_id    bigint not null
+                    constraint ads_sended_chats_id_fk
+                        references chats,
+                message_id bigint
+                    constraint ads_sended_messages_id_fk
+                        references messages,
+                is_success bool default false not null
+            );
+
+            create unique index ads_sended_ads_id_chat_id_message_id_uindex
+                on ads_sended (ads_id, chat_id, message_id);
+        </sql>
+
+    </changeSet>
+</databaseChangeLog>

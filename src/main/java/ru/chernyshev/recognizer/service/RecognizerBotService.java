@@ -150,23 +150,24 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private void updateResult(MessageEntity messageEntity, String text, RecognizerType recognizerType) {
 
         String from = FromBuilder.create(messageEntity.getUser()).setItalic().get();
+        ChatEntity chat = messageEntity.getChat();
 
         EditMessageText editMessage = new EditMessageText();
         editMessage.enableMarkdown(true);
-        editMessage.setChatId(String.valueOf(messageEntity.getChat().getTelegramId()));
+        editMessage.setChatId(String.valueOf(chat.getTelegramId()));
         editMessage.setMessageId(messageEntity.getTelegramId());
         boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
         editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
         if (recognizeSuccessfully) {
             AdsButton current = adsService.getCurrent();
-            if (isNeedShowAds(messageEntity.getChat(), current)) {
+            if (isNeedShowAds(chat, current)) {
                 InlineKeyboardButton adsButton = new InlineKeyboardButton(current.getText());
                 adsButton.setUrl(current.getUrl());
                 List<List<InlineKeyboardButton>> keyBoard = new ArrayList<>();
                 keyBoard.add(Lists.newArrayList(adsButton));
                 InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(keyBoard);
                 editMessage.setReplyMarkup(replyMarkup);
-                messageEntity.setShowAdsId(current.getId());
+                adsService.saveAdsSendInfo(current.getId(), chat.getId(), messageEntity.getId(), true);
             }
         }
         try {

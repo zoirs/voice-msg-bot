@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.chernyshev.recognizer.entity.AdsSended;
 import ru.chernyshev.recognizer.entity.AdsEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
 import ru.chernyshev.recognizer.model.AdsType;
@@ -58,6 +59,19 @@ public class AdsService {
         }
         adsButton = new AdsButton(adsEntity);
         logger.info("Find active ads : {}", adsButton);
+    }
+
+    public void saveAdsSendInfo(Long adsId, Long chatId, Long messageId, boolean result){
+        AdsSended adsDirectSend = new AdsSended(adsId, chatId, messageId, result);
+        adsDirectRepository.save(adsDirectSend);
+    }
+
+    public AdsSended getLastSended(){
+        return adsDirectRepository.findFirstByOrderByIdDesc();
+    }
+
+    public AdsSended getFirstForAds(Long adsId) {
+        return adsDirectRepository.findFirstByAdsIdOrderByIdAsc(adsId);
     }
 
     AdsButton getCurrent() {

@@ -21,7 +21,7 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
 import ru.chernyshev.recognizer.FixtureHelper;
 import ru.chernyshev.recognizer.RepoFactory4Test;
-import ru.chernyshev.recognizer.entity.AdsDirectEntity;
+import ru.chernyshev.recognizer.entity.AdsSended;
 import ru.chernyshev.recognizer.entity.AdsEntity;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
@@ -74,7 +74,7 @@ public class AdsSenderTest {
 
         @Bean
         public AdsSenderService adsSenderService(AdsDirectRepository adsDirectRepository, AdsService adsService, ChatRepository chatRepository) {
-            return new AdsSenderService(recognizerBotService, adsService, adsDirectRepository, chatRepository, batchSize, maxMessagePerSecond);
+            return new AdsSenderService(recognizerBotService, adsService, chatRepository, batchSize, maxMessagePerSecond);
         }
     }
 
@@ -99,7 +99,7 @@ public class AdsSenderTest {
 
     @Test
     public void sendTaskCheck() {
-        Iterable<AdsDirectEntity> wasSend = adsDirectRepository.findAll();
+        Iterable<AdsSended> wasSend = adsDirectRepository.findAll();
         Assert.assertFalse(wasSend.iterator().hasNext());
 
         AdsEntity ads = createAdsTask(13L);
@@ -112,10 +112,10 @@ public class AdsSenderTest {
         wasSend = adsDirectRepository.findAll();
 
         Set<Long> sendToTelegramIds = new HashSet<>();
-        Iterator<AdsDirectEntity> wasSendIterator = wasSend.iterator();
+        Iterator<AdsSended> wasSendIterator = wasSend.iterator();
         for (int i = 0; i < ads.getMaxCount(); i++) {
             Assert.assertTrue(wasSendIterator.hasNext());
-            AdsDirectEntity adsSend = wasSendIterator.next();
+            AdsSended adsSend = wasSendIterator.next();
             Assert.assertFalse(sendToTelegramIds.contains(adsSend.getChatId()));
             sendToTelegramIds.add(adsSend.getChatId());
         }
@@ -124,7 +124,7 @@ public class AdsSenderTest {
 
     @Test
     public void notSendAdsTwice() {
-        Iterable<AdsDirectEntity> wasSend = adsDirectRepository.findAll();
+        Iterable<AdsSended> wasSend = adsDirectRepository.findAll();
         Assert.assertFalse(wasSend.iterator().hasNext());
 
         AdsEntity ads = createAdsTask(13L);
@@ -138,7 +138,7 @@ public class AdsSenderTest {
         adsSenderService.checkNeedSend();
         wasSend = adsDirectRepository.findAll();
 
-        Iterator<AdsDirectEntity> wasSendIterator = wasSend.iterator();
+        Iterator<AdsSended> wasSendIterator = wasSend.iterator();
         for (int i = 0; i < chats.size(); i++) {
             Assert.assertTrue(wasSendIterator.hasNext());
             wasSendIterator.next();
@@ -148,7 +148,7 @@ public class AdsSenderTest {
 
     @Test
     public void notSendAdsTwiceFromCenter() {
-        Iterable<AdsDirectEntity> wasSend = adsDirectRepository.findAll();
+        Iterable<AdsSended> wasSend = adsDirectRepository.findAll();
         Assert.assertFalse(wasSend.iterator().hasNext());
 
         AdsEntity ads = createAdsTask(13L);
@@ -161,14 +161,14 @@ public class AdsSenderTest {
         adsRepository.save(completeAdsTask);
 
         long completeTaskId = completeAdsTask.getId();
-        adsDirectRepository.save(new AdsDirectEntity(completeTaskId, chats.get(0).getId(), true));
-        adsDirectRepository.save(new AdsDirectEntity(completeTaskId, chats.get(1).getId(), true));
+        adsDirectRepository.save(new AdsSended(completeTaskId, chats.get(0).getId(), true));
+        adsDirectRepository.save(new AdsSended(completeTaskId, chats.get(1).getId(), true));
 
         Assert.assertTrue(ads.getMaxCount() > chats.size());
 
         adsSenderService.checkNeedSend();
 
-        Iterable<AdsDirectEntity> allSend = adsDirectRepository.findAll();
+        Iterable<AdsSended> allSend = adsDirectRepository.findAll();
         Assert.assertEquals(2, Streams.stream(allSend).filter(q -> q.getAdsId().equals(completeTaskId)).count());
         Assert.assertEquals(7, Streams.stream(allSend).filter(q -> q.getAdsId().equals(ads.getId())).count());
 

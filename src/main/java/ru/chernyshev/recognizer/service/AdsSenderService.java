@@ -12,11 +12,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import ru.chernyshev.recognizer.entity.AdsDirectEntity;
+import ru.chernyshev.recognizer.entity.AdsSended;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
 import ru.chernyshev.recognizer.model.AdsType;
-import ru.chernyshev.recognizer.repository.AdsDirectRepository;
 import ru.chernyshev.recognizer.repository.ChatRepository;
 
 import java.io.File;
@@ -33,20 +32,17 @@ public class AdsSenderService {
     private final Pageable firstPage;
     private final RecognizerBotService recognizerBotService;
     private final AdsService adsService;
-    private final AdsDirectRepository adsDirectRepository;
     private final ChatRepository chatRepository;
     private final RateLimiter rateLimiter;
 
     @Autowired
     public AdsSenderService(RecognizerBotService recognizerBotService,
                             AdsService adsService,
-                            AdsDirectRepository adsDirectRepository,
                             ChatRepository chatRepository,
                             @Value("${ads.batch.size}") int batchSize,
                             @Value("${ads.direct.max.count.per.second}") long maxContMessagePerSecond) {
         this.recognizerBotService = recognizerBotService;
         this.adsService = adsService;
-        this.adsDirectRepository = adsDirectRepository;
         this.chatRepository = chatRepository;
         this.firstPage = PageRequest.of(0, batchSize, Sort.by("id"));
         this.rateLimiter = RateLimiter.create(maxContMessagePerSecond);
@@ -74,21 +70,20 @@ public class AdsSenderService {
             }
             SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.get().getTelegramId());
             boolean result = recognizerBotService.sendDirect(sendPhoto);
-            AdsDirectEntity adsDirectEntity = new AdsDirectEntity(current.getId(), current.getTestChatId(), result);
-            adsDirectRepository.save(adsDirectEntity);
+            adsService.saveAdsSendInfo(current.getId(), current.getTestChatId(), null, result);
             current.inc();
             return;
         }
 
-        Optional<AdsDirectEntity> firstForThisAds = Optional.empty();
-        AdsDirectEntity lastAdsSend = adsDirectRepository.findFirstByOrderByIdDesc();
-        Long lastChatId = Optional.ofNullable(lastAdsSend).map(AdsDirectEntity::getChatId).orElse(0L);
+        Optional<AdsSended> firstForThisAds = Optional.empty();
+        AdsSended lastAdsSend = adsService.getLastSended();
+        Long lastChatId = Optional.ofNullable(lastAdsSend).map(AdsSended::getChatId).orElse(0L);
         while (!current.isExpiry()) {
             List<ChatEntity> batchChats = chatRepository.findAllByGroupTypeAndIdGreaterThan("private", lastChatId, firstPage);
             if (batchChats.isEmpty()) {
                 logger.info("All chats was send, restart ads list");
                 lastChatId = 0L;
-                firstForThisAds = Optional.ofNullable(adsDirectRepository.findFirstByAdsIdOrderByIdAsc(current.getId()));
+                firstForThisAds = Optional.ofNullable(adsService.getFirstForAds(current.getId()));
                 continue;
             }
 
@@ -102,10 +97,9 @@ public class AdsSenderService {
                 SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.getTelegramId());
                 rateLimiter.acquire();
                 boolean result = recognizerBotService.sendDirect(sendPhoto);
-                AdsDirectEntity adsDirectSend = new AdsDirectEntity(current.getId(), chatEntity.getId(), result);
-                adsDirectRepository.save(adsDirectSend);
+                adsService.saveAdsSendInfo(current.getId(), chatEntity.getId(), null, result);
                 current.inc();
-                lastChatId = adsDirectSend.getChatId();
+                lastChatId = chatEntity.getId();
                 if (current.isExpiry()) {
                     break;
                 }

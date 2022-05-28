@@ -1,0 +1,14 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.10.2">
+
+        <sql>
+            INSERT INTO ads_sended (id, ads_id, chat_id, message_id, is_success)
+            select nextval('seq_ads_sended'), show_ads_id, fk_chat, id, true from messages where show_ads_id is not null;
+        </sql>
+
+    </changeSet>
+</databaseChangeLog>

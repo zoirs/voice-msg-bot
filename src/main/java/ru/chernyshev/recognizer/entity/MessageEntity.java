@@ -49,9 +49,6 @@ public class MessageEntity extends AbstractTimestampEntity {
     @OneToMany(mappedBy = "message")
     private List<LikeEntity> likes = new ArrayList<>();
 
-    @Column
-    private Long showAdsId;
-
     public MessageResult getResult() {
         return result;
     }
@@ -122,13 +119,5 @@ public class MessageEntity extends AbstractTimestampEntity {
 
     public void setTelegramId(Integer telegramId) {
         this.telegramId = telegramId;
-    }
-
-    public Long getShowAdsId() {
-        return showAdsId;
-    }
-
-    public void setShowAdsId(Long showAdsId) {
-        this.showAdsId = showAdsId;
     }
 }

@@ -1,0 +1,16 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.10.1">
+
+        <sql>
+            INSERT INTO ads_sended (id, ads_id, chat_id, is_success)
+            select  id, ads_id, chat_id, is_success from ads_direct;
+
+            SELECT setval('seq_ads_sended', (select max(id) from ads_sended), true);
+        </sql>
+
+    </changeSet>
+</databaseChangeLog>
