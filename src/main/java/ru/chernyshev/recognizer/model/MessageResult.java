@@ -15,5 +15,6 @@ public enum MessageResult {
     SEND_ERROR,
     CANT_UPDATE,
     SYSTEM_MSG,
-    ERROR
+    ERROR,
+    OVERDUE
 }

@@ -24,4 +24,6 @@
     <include file="changelogs/0.10.0.xml"/>
     <include file="changelogs/0.10.1.xml"/>
     <include file="changelogs/0.10.2.xml"/>
+    <include file="changelogs/0.11.0.xml"/>
+    <include file="changelogs/0.11.1.xml"/>
 </databaseChangeLog>

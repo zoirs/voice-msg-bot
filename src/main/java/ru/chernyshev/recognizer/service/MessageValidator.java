@@ -10,6 +10,9 @@ import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.ChatStatus;
 import ru.chernyshev.recognizer.model.MessageResult;
 
+import java.time.Instant;
+import java.util.Date;
+
 @Service
 public class MessageValidator {
     private static final int MAX_SIZE = 1024 * 1024;
@@ -25,7 +28,7 @@ public class MessageValidator {
         this.chatService = chatService;
     }
 
-    public MessageResult validate(ChatEntity chat, Voice voice){
+    private MessageResult validate(ChatEntity chat, Voice voice, Integer sendDate){
 
         if (!"audio/ogg".equals(voice.getMimeType())) {
             logger.info("Incorrect audio format {}", voice.getMimeType());
@@ -49,6 +52,13 @@ public class MessageValidator {
             return MessageResult.VOICE_MSG_TOO_LONG;
         }
 
+        long unixTimestamp = Instant.now().getEpochSecond();
+        long delaySeconds = unixTimestamp - sendDate;
+        if (delaySeconds > 30) {
+            logger.info("Message OVERDUE! Delay is {}. Was send at {}", delaySeconds, new Date(unixTimestamp * 1000));
+            //return MessageResult.OVERDUE;
+        }
+
         if (voice.getFileSize() > MAX_SIZE) {
             logger.warn("Message too big: {}", voice.getFileSize());
             return MessageResult.VOICE_MSG_TOO_HARD;
@@ -59,6 +69,6 @@ public class MessageValidator {
 
     public MessageResult validate(Message receivedMsg) {
         ChatEntity chatEntity = chatService.getOrCreate(receivedMsg.getChat());
-        return validate(chatEntity, receivedMsg.getVoice());
+        return validate(chatEntity, receivedMsg.getVoice(), receivedMsg.getDate());
     }
 }
