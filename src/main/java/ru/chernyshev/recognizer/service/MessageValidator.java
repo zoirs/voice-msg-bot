@@ -56,7 +56,7 @@ public class MessageValidator {
         long delaySeconds = unixTimestamp - sendDate;
         if (delaySeconds > 30) {
             logger.info("Message OVERDUE! Delay is {}. Was send at {}", delaySeconds, new Date(unixTimestamp * 1000));
-            //return MessageResult.OVERDUE;
+            return MessageResult.OVERDUE;
         }
 
         if (voice.getFileSize() > MAX_SIZE) {
