@@ -15,7 +15,7 @@ import java.util.Date;
 
 @Service
 public class MessageValidator {
-    private static final int MAX_SIZE = 1024 * 1024;
+    private static final int MAX_SIZE = 10 * 1024 * 1024;
     public static final int MAX_SECONDS = 180;
 
     private static final Logger logger = LoggerFactory.getLogger(MessageValidator.class);

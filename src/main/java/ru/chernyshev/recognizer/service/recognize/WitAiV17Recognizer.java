@@ -101,7 +101,7 @@ public class WitAiV17Recognizer implements Recognizer {
 
     @Override
     public boolean isApplicable(int duration) {
-        return duration < 20;
+        return duration < 19;
     }
 
 }
