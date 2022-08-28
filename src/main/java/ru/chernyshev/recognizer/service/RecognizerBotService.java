@@ -106,7 +106,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        logger.info("Message {} in chat {} has voice {}", receivedMsg.getMessageId(), receivedMsg.getChatId(), voice.toString());//байт , sec
+        logger.info("Message {} in chat {} has voice (duration {}, size {})", receivedMsg.getMessageId(), receivedMsg.getChatId(), voice.getDuration(), voice.getFileSize());//байт , sec
 
         MessageEntity messageEntity = messageService.create(receivedMsg);
 
