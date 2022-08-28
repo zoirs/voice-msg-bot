@@ -2,6 +2,7 @@ package ru.chernyshev.recognizer.service.recognize;
 
 
 import com.google.common.base.Enums;
+import com.google.common.base.Preconditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,14 @@ public class RecognizeFactory {
         this.activeRecognizers = new ArrayList<>();
         for (String r : recognizers.split(",")) {
             RecognizerType type = Enums.getIfPresent(RecognizerType.class, r).orNull();
+            Preconditions.checkArgument(type != null, "Incorrect recognize type name");
             Optional<Recognizer> recognizer = recognizerBeans.stream()
                     .filter(rec -> rec.getType() == type)
                     .findFirst();
 
             recognizer.ifPresent(activeRecognizers::add);
         }
+        Preconditions.checkArgument(!activeRecognizers.isEmpty(), "Check configuration");
     }
 
     public List<Recognizer> create(int duration) {

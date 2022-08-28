@@ -91,7 +91,7 @@ public class DialogFlowRecognizer implements Recognizer {
 
     @Override
     public boolean isApplicable(int duration) {
-        return duration < 60;
+        return duration > 20 && duration < 60;
     }
 
     private InputAudioConfig getInputAudioConfig() {

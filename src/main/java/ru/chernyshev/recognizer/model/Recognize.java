@@ -38,6 +38,9 @@ public class Recognize implements Supplier<Entry<String, RecognizerType>> {
                 break;
             }
         }
+        if (StringUtils.isEmpty(text)) {
+            logger.warn("Recognize unsuccessful {}", voiceFile.length());
+        }
         deleteFile(voiceFile);
         return new SimpleEntry<>(text, recognizerType);
     }

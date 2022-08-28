@@ -55,7 +55,7 @@ public class MessageValidator {
         long unixTimestamp = Instant.now().getEpochSecond();
         long delaySeconds = unixTimestamp - sendDate;
         if (delaySeconds > 30) {
-            logger.info("Message OVERDUE! Delay is {}. Was send at {}", delaySeconds, new Date(unixTimestamp * 1000));
+            logger.info("Message OVERDUE! Delay is {}. Was send at {}", delaySeconds, new Date(sendDate * 1000));
             return MessageResult.OVERDUE;
         }
 
