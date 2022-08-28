@@ -15,9 +15,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.dto.WitAiChunkResponse;
 import ru.chernyshev.recognizer.model.RecognizerType;
+import ru.chernyshev.recognizer.service.MessageValidator;
 import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
 
 import java.io.File;
@@ -113,7 +115,7 @@ public class WitAiV22Recognizer implements Recognizer {
         while (jp.hasCurrentToken()) {
             WitAiChunkResponse token = jp.readValueAs(WitAiChunkResponse.class);
             jp.nextToken();
-            if (token.isIs_final()) {
+            if (token.isIs_final() && !StringUtils.isEmpty(token.getText())) {
                 result.append(token.getText());
                 result.append(" ");
             }
@@ -136,7 +138,7 @@ public class WitAiV22Recognizer implements Recognizer {
 
     @Override
     public boolean isApplicable(int duration) {
-        return duration < 120;
+        return duration > 19 && duration < MessageValidator.MAX_SECONDS;
     }
 
 }
