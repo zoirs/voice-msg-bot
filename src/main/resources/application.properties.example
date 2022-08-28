@@ -26,6 +26,7 @@ recognizers=
 
 ffmpeg.path=
 
+# will remove
 witat.auth=
 witat.url=
 
@@ -39,3 +40,9 @@ rest.connect.timeout=
 
 ads.batch.size=
 ads.direct.max.count.per.second=
+
+witat=base,extra
+base.witat.auth=
+base.witat.url=
+extra.witat.auth=
+extra.witat.url=
