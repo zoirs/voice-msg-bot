@@ -38,8 +38,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
 
-    private final ExecutorService service = Executors.newFixedThreadPool(4);
-
+    private final ExecutorService service;
     private final RecognizeFactory recognizeFactory;
     private final String botToken;
     private final String botUsername;
@@ -54,6 +53,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     public RecognizerBotService(RecognizeFactory recognizeFactory,
                                 @Value("${botToken}") String botToken,
                                 @Value("${botUsername}") String botUsername,
+                                @Value("${threads.count}") int threadCount,
                                 ChatService chatService,
                                 MessageService messageService,
                                 MessageValidator messageValidator,
@@ -69,6 +69,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         this.messageSource = messageSource;
         this.userService = userService;
         this.adsService = adsService;
+        this.service = Executors.newFixedThreadPool(threadCount);
     }
 
     @Override
