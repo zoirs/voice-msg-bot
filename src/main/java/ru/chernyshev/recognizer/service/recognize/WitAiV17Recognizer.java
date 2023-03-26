@@ -1,5 +1,6 @@
 package ru.chernyshev.recognizer.service.recognize;
 
+import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,16 @@ public class WitAiV17Recognizer implements Recognizer {
     private final RestTemplate restTemplate;
     private final List<WitSettings> settings;
 
+    private final RateLimiter rateLimiter;
+
+    private int countOfUse;
+
     @Autowired
     public WitAiV17Recognizer(@Value("${ffmpeg.path}") String ffmpeg,
                               @Value("${WITAT_V17}") List<String> configs,
                               Environment env,
                               RestTemplate restTemplate) {
+        this.rateLimiter = RateLimiter.create(1);
         this.ffmpeg = ffmpeg;
         this.settings = configs.stream()
                 .map(q -> new WitSettings(q, env.getProperty(q + ".witat.url"), env.getProperty(q + ".witat.auth")))
@@ -70,6 +76,10 @@ public class WitAiV17Recognizer implements Recognizer {
             headers.set("Content-Type", "audio/ogg");
             HttpEntity<byte[]> entity = new HttpEntity<>(bytes, headers);
             ResponseEntity<WitAtMsgResponse> response;
+            if (!rateLimiter.tryAcquire()) {
+                logger.warn("Rate too much");
+            }
+            countOfUse++;
             try {
                 response = restTemplate.postForEntity(setting.getUrl(), entity, WitAtMsgResponse.class);
             } catch (Exception e) {
@@ -104,4 +114,7 @@ public class WitAiV17Recognizer implements Recognizer {
         return duration < 19;
     }
 
+    public int priority() {
+        return countOfUse;
+    }
 }

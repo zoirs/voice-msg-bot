@@ -26,6 +26,7 @@ import ru.chernyshev.recognizer.service.recognize.Recognizer;
 import ru.chernyshev.recognizer.utils.FromBuilder;
 import ru.chernyshev.recognizer.utils.MessageKeys;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,7 +119,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         String text = messageSource.getMessage(MessageKeys.WAIT, null, messageService.getLocale(messageEntity));
-        Message initMessage = sendMsg(receivedMsg.getChat(), text);
+        Message initMessage = sendMsg(receivedMsg.getChat(), receivedMsg.getMessageThreadId(), text);
         if (initMessage != null) {
             messageService.update(messageEntity, MessageResult.WAIT, initMessage.getMessageId());
         } else {
@@ -180,7 +181,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
     }
 
-    private Message sendMsg(Chat chat, String text) {
+    private Message sendMsg(Chat chat, @Nullable Integer messageThreadId, String text) {
         if (StringUtils.isEmpty(text)) {
             logger.error("Cant send message empty msg");
             return null;
@@ -188,6 +189,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chat.getId()));
         message.enableMarkdown(true);
+        message.setMessageThreadId(messageThreadId);
         message.setText(Strings.capitalize(text));
         try {
             return execute(message);

@@ -3,6 +3,7 @@ package ru.chernyshev.recognizer.service.recognize;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +41,19 @@ public class WitAiV22Recognizer implements Recognizer {
     private final JsonFactory jsonFactory = new JsonFactory();
     private final ObjectMapper objectMapper;
 
+    private final RateLimiter rateLimiter;
+
+    private int countOfUse;
 
     @Autowired
     public WitAiV22Recognizer(@Value("${ffmpeg.path}") String ffmpeg,
                               @Value("${WITAT_V22}") List<String> configs,
                               Environment env,
                               RestTemplate restTemplate,
-                              ObjectMapper objectMapper) {
+                              ObjectMapper objectMapper, RateLimiter rateLimiter) {
         this.ffmpeg = ffmpeg;
         this.objectMapper = objectMapper;
+        this.rateLimiter = RateLimiter.create(1);
         this.settings = configs.stream()
                 .map(q -> new WitSettings(q, env.getProperty(q + ".witat.url"), env.getProperty(q + ".witat.auth")))
                 .collect(Collectors.toList());
@@ -83,6 +88,10 @@ public class WitAiV22Recognizer implements Recognizer {
             headers.set("Content-Type", "audio/ogg");
             HttpEntity<byte[]> entity = new HttpEntity<>(bytes, headers);
             ResponseEntity<Resource> responseEntity;
+            if (!rateLimiter.tryAcquire()) {
+                logger.warn("Rate too much");
+            }
+            countOfUse++;
             try {
                 responseEntity = restTemplate.exchange(setting.getUrl(), HttpMethod.POST, entity, Resource.class);
             } catch (Exception e) {
@@ -141,4 +150,7 @@ public class WitAiV22Recognizer implements Recognizer {
         return duration > 10 && duration < MessageValidator.MAX_SECONDS;
     }
 
+    public int priority() {
+        return countOfUse;
+    }
 }

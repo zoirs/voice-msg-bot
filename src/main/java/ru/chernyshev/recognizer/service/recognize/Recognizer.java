@@ -10,4 +10,8 @@ public interface Recognizer {
     RecognizerType getType();
 
     boolean isApplicable(int duration);
+
+    default int priority() {
+        return Integer.MAX_VALUE;
+    }
 }
