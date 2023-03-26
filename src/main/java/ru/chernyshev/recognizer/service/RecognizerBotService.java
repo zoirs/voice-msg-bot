@@ -26,7 +26,6 @@ import ru.chernyshev.recognizer.service.recognize.Recognizer;
 import ru.chernyshev.recognizer.utils.FromBuilder;
 import ru.chernyshev.recognizer.utils.MessageKeys;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,9 +108,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         logger.info("Message {} in chat {} has voice (duration {}, size {})", receivedMsg.getMessageId(), receivedMsg.getChatId(), voice.getDuration(), voice.getFileSize());//байт , sec
-        if (receivedMsg.getMessageThreadId() != null) {
-            logger.info("Message send to topic {}", receivedMsg);
-        }
+
         MessageEntity messageEntity = messageService.create(receivedMsg);
 
         MessageResult validateResult = messageValidator.validate(receivedMsg);
@@ -121,7 +118,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         String text = messageSource.getMessage(MessageKeys.WAIT, null, messageService.getLocale(messageEntity));
-        Message initMessage = sendMsg(receivedMsg.getChat(), receivedMsg.getMessageThreadId(), text);
+        Message initMessage = sendMsg(text, receivedMsg);
         if (initMessage != null) {
             messageService.update(messageEntity, MessageResult.WAIT, initMessage.getMessageId());
         } else {
@@ -183,20 +180,28 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
     }
 
-    private Message sendMsg(Chat chat, @Nullable Integer messageThreadId, String text) {
+    private Message sendMsg(String text, Message receivedMsg) {
         if (StringUtils.isEmpty(text)) {
             logger.error("Cant send message empty msg");
             return null;
         }
+        Chat chat = receivedMsg.getChat();
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chat.getId()));
         message.enableMarkdown(true);
-        message.setMessageThreadId(messageThreadId);
+        if (receivedMsg.isTopicMessage()) {
+            // Топик супер группы
+            message.setMessageThreadId(receivedMsg.getMessageThreadId());
+            logger.info("Chat with topics {}", receivedMsg);
+        } else if (receivedMsg.getMessageThreadId() != null) {
+            // Канал с прилинкованной группой с комментариями
+            message.setReplyToMessageId(receivedMsg.getMessageId());
+        }
         message.setText(Strings.capitalize(text));
         try {
             return execute(message);
         } catch (TelegramApiException e) {
-            logger.error(String.format("Cant send message to chat %s %s, error %s", chat.getId(), chat.getTitle(), e.toString()), e);
+            logger.error(String.format("Cant send message to chat %s %s, error %s", chat.getId(), chat.getTitle(), e), e);
             if (e.toString().contains("have no rights to send a message")) {
                 chatService.banned(chat);
             }

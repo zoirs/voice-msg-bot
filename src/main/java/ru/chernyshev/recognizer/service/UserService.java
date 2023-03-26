@@ -32,13 +32,13 @@ public class UserService {
             userEntity.setLastName(user.getLastName());
             userRepository.save(userEntity);
         } else if (isNameWasChanged(user, userEntity)) {
+            String oldName = userEntity.getUserName() + " " + userEntity.getFirstName() + " " + userEntity.getLastName();
+            String currentName = user.getUserName() + " " + user.getFirstName() + " " + user.getLastName();
+            logger.info("Name of user was changed from {} to {}", oldName, currentName);
             userEntity.setFirstName(user.getFirstName());
             userEntity.setUserName(user.getUserName());
             userEntity.setLastName(user.getLastName());
             userRepository.save(userEntity);
-            String oldName = userEntity.getUserName() + " " + userEntity.getFirstName() + " " + userEntity.getLastName();
-            String currentName = user.getUserName() + " " + user.getFirstName() + " " + user.getLastName();
-            logger.info("Name of user was changed from {} to {}", oldName, currentName);
         }
         return userEntity;
     }
