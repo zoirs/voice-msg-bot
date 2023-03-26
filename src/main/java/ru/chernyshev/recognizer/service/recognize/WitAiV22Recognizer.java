@@ -50,7 +50,7 @@ public class WitAiV22Recognizer implements Recognizer {
                               @Value("${WITAT_V22}") List<String> configs,
                               Environment env,
                               RestTemplate restTemplate,
-                              ObjectMapper objectMapper, RateLimiter rateLimiter) {
+                              ObjectMapper objectMapper) {
         this.ffmpeg = ffmpeg;
         this.objectMapper = objectMapper;
         this.rateLimiter = RateLimiter.create(1);
