@@ -46,8 +46,8 @@ public class RecognizerApplication {
                                      @Value("${rest.read.timeout}") int readTimeout,
                                      @Value("${rest.connect.timeout}") int connectTimeout) {
         CloseableHttpClient httpClient = HttpClientBuilder.create()
-                .setMaxConnTotal(40)
-                .setMaxConnPerRoute(4)
+                .setMaxConnTotal(48)
+                .setMaxConnPerRoute(16)
                 .build();
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
         requestFactory.setConnectionRequestTimeout(connectionTimeout);
