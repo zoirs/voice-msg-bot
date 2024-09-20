@@ -53,7 +53,7 @@ public class AdsService {
         if (adsEntity.getType() == AdsType.DIRECT) {
             long wasSendCount = adsDirectRepository.countByAdsId(adsEntity.getId());
             if (wasSendCount >= adsEntity.getMaxCount()) {
-                logger.info("Already sended max count {} for : {}", adsEntity.getMaxCount(), adsEntity.getId());
+                logger.info("Already sended {} ;max count {} for : {}", wasSendCount, adsEntity.getMaxCount(), adsEntity.getId());
                 return;
             }
         }

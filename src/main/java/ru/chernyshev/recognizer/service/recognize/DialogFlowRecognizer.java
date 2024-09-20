@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-@Service
+//@Service
 public class DialogFlowRecognizer implements Recognizer {
     private static final Logger logger = LoggerFactory.getLogger(DialogFlowRecognizer.class);
 
