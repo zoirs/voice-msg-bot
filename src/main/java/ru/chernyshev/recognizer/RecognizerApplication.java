@@ -1,5 +1,7 @@
 package ru.chernyshev.recognizer;
 
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +45,11 @@ public class RecognizerApplication {
     public RestTemplate restTemplate(@Value("${rest.connection.timeout}") int connectionTimeout,
                                      @Value("${rest.read.timeout}") int readTimeout,
                                      @Value("${rest.connect.timeout}") int connectTimeout) {
-        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        CloseableHttpClient httpClient = HttpClientBuilder.create()
+                .setMaxConnTotal(40)
+                .setMaxConnPerRoute(4)
+                .build();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
         requestFactory.setConnectionRequestTimeout(connectionTimeout);
         requestFactory.setReadTimeout(readTimeout);
         requestFactory.setConnectTimeout(connectTimeout);
