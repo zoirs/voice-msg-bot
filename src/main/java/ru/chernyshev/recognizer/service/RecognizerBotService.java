@@ -192,7 +192,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         if (receivedMsg.isTopicMessage()) {
             // Топик супер группы
             message.setMessageThreadId(receivedMsg.getMessageThreadId());
-            logger.info("Chat with topics {}", receivedMsg);
+//            logger.info("Chat with topics {}", receivedMsg);
         } else if (receivedMsg.getMessageThreadId() != null) {
             // Канал с прилинкованной группой с комментариями
             message.setReplyToMessageId(receivedMsg.getMessageId());

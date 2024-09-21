@@ -52,14 +52,15 @@ public class AdsService {
             return;
         }
         AdsEntity adsEntity = currentTasks.get(0);
+        long wasSendCount = 0;
         if (adsEntity.getType() == AdsType.DIRECT) {
-            long wasSendCount = adsDirectRepository.countByAdsId(adsEntity.getId());
+            wasSendCount = adsDirectRepository.countByAdsId(adsEntity.getId());
             if (wasSendCount >= adsEntity.getMaxCount()) {
                 logger.info("Already sended {} ;max count {} for : {}", wasSendCount, adsEntity.getMaxCount(), adsEntity.getId());
                 return;
             }
         }
-        adsButton = new AdsButton(adsEntity);
+        adsButton = new AdsButton(adsEntity, wasSendCount);
         logger.info("Find active ads : {}", adsButton);
     }
 

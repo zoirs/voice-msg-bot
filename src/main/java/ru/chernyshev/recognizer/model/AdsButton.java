@@ -16,7 +16,7 @@ public class AdsButton {
     private final String filePath;
     private long currentCount;
 
-    public AdsButton(AdsEntity adsEntity) {
+    public AdsButton(AdsEntity adsEntity, long wasSendCount) {
         this.start = adsEntity.getStart();
         this.finish = adsEntity.getFinish();
         this.url = adsEntity.getUrl();
@@ -26,6 +26,7 @@ public class AdsButton {
         this.maxCount = adsEntity.getMaxCount();
         this.filePath = adsEntity.getFilePath();
         this.testChatId = adsEntity.getTestChatId();
+        this.currentCount = wasSendCount;
     }
 
     public Long getId() {
