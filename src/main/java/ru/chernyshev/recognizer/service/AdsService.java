@@ -3,8 +3,10 @@ package ru.chernyshev.recognizer.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import ru.chernyshev.recognizer.entity.AdsSended;
 import ru.chernyshev.recognizer.entity.AdsEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
@@ -67,7 +69,11 @@ public class AdsService {
     }
 
     public AdsSended getLastSended() {
-        return adsDirectRepository.getLastDirectSended();
+        List<AdsSended> result = adsDirectRepository.getLastDirectSended(PageRequest.of(0, 1));
+        if (CollectionUtils.isEmpty(result)) {
+            return null;
+        }
+        return result.get(0);
     }
 
     public AdsSended getFirstForAds(Long adsId) {
