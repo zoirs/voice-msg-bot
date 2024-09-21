@@ -142,7 +142,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         try {
             execute(sendPhoto);
         } catch (TelegramApiException e) {
-            logger.error("Cant send direct message ", e);
+            logger.warn("Cant send direct message {}", e.toString());
             return false;
         }
         return true;

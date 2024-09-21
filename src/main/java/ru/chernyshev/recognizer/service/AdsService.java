@@ -66,8 +66,8 @@ public class AdsService {
         adsDirectRepository.save(adsDirectSend);
     }
 
-    public AdsSended getLastSended(){
-        return adsDirectRepository.findFirstByOrderByIdDesc();
+    public AdsSended getLastSended() {
+        return adsDirectRepository.getLastDirectSended();
     }
 
     public AdsSended getFirstForAds(Long adsId) {
