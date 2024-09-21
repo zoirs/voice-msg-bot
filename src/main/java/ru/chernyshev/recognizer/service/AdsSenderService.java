@@ -93,7 +93,7 @@ public class AdsSenderService {
                     logger.info("Ads was send to all chats, break sending");
                     return;
                 }
-                logger.info("Send to chat {}, telegramId {}", chatEntity.getId(), chatEntity.getTelegramId());
+                logger.info("Send to chatID {}, telegramId {}, was send {}", chatEntity.getId(), chatEntity.getTelegramId(), current.getCurrentCount());
                 SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.getTelegramId());
                 rateLimiter.acquire();
                 boolean result = recognizerBotService.sendDirect(sendPhoto);

@@ -64,6 +64,10 @@ public class AdsButton {
         currentCount++;
     }
 
+    public long getCurrentCount() {
+        return currentCount;
+    }
+
     public Long getTestChatId() {
         return testChatId;
     }
