@@ -35,6 +35,7 @@ public class FfmpegCommandBuilder {
                 // VBR.key, "on",
                 // START_SECOND.key, "1",
                 // DURATION.key, "19",
+                "-af", "silenceremove=start_periods=1:stop_periods=-1:stop_duration=0.2:start_threshold=-45dB:stop_threshold=-45dB",
                 outputFilePath);
         processBuilder.directory(new File(tmpDir));
         return this;
@@ -48,6 +49,7 @@ public class FfmpegCommandBuilder {
                 "-qscale:a", "3",
                 "-map", "0:a",
                 "-async", "1",
+                "-af", "silenceremove=start_periods=1:stop_periods=-1:stop_duration=0.2:start_threshold=-45dB:stop_threshold=-45dB",
                 "-vn",
                 outputFilePath);
         processBuilder.directory(new File(tmpDir));
