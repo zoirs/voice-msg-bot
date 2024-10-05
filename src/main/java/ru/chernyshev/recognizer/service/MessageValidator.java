@@ -10,7 +10,6 @@ import ru.chernyshev.recognizer.model.ChatStatus;
 import ru.chernyshev.recognizer.model.MessageResult;
 
 import java.time.Instant;
-import java.util.Date;
 
 @Service
 public class MessageValidator {
@@ -26,12 +25,15 @@ public class MessageValidator {
         this.chatService = chatService;
     }
 
-    private MessageResult validate(ChatEntity chat, Message recivedMsg, Integer sendDate){
+    private MessageResult validate(ChatEntity chat, Message recivedMsg, Integer sendDate) {
 
-//        if (!"audio/ogg".equals(voice.getMimeType())) {
-//            logger.info("Incorrect audio format {}", voice.getMimeType());
-//            return MessageResult.VOICE_MSG_INCORRECT_FORMAT;
-//        }
+        if (recivedMsg.hasVoice()) {
+            String mimeType = recivedMsg.getVoice().getMimeType();
+            if (!"audio/ogg".equals(mimeType)) {
+                logger.info("Incorrect audio format {}", mimeType);
+                return MessageResult.VOICE_MSG_INCORRECT_FORMAT;
+            }
+        }
 
         if (chat.getState() != ChatStatus.ACTIVE) {
             logger.info("Chat {} is {}", chat.getId(), chat.getState());
