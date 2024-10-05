@@ -102,12 +102,13 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        Voice voice = receivedMsg.getVoice();
-        if (voice == null) { // Возможно, для статистики не плохо было бы собирать данные
+        String fileId = MessageService.getFileId(receivedMsg);
+        if (fileId == null) { // Возможно, для статистики не плохо было бы собирать данные
             return;
         }
 
-        logger.info("Message {} in chat {} has voice (duration {}, size {})", receivedMsg.getMessageId(), receivedMsg.getChatId(), voice.getDuration(), voice.getFileSize());//байт , sec
+        MessageType type = MessageService.getType(receivedMsg);
+        logger.info("Message {} in chat {} has {} (duration {}, size {})", receivedMsg.getMessageId(), receivedMsg.getChatId(), type, MessageService.getDuration(receivedMsg), MessageService.getFileSize(receivedMsg));//байт , sec
 
         MessageEntity messageEntity = messageService.create(receivedMsg);
 
@@ -127,11 +128,11 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        List<Recognizer> recognizers = recognizeFactory.create(voice.getDuration());
+        List<Recognizer> recognizers = recognizeFactory.create(MessageService.getDuration(receivedMsg), type);
 
         CompletableFuture
-                .supplyAsync(() -> executeFile(voice), service)
-                .thenApply(file -> new Recognize(file, recognizers).get())
+                .supplyAsync(() -> executeFile(fileId), service)
+                .thenApply(file -> new Recognize(file, recognizers, type).get())
                 .thenAccept(result -> updateResult(messageEntity, result.getKey(), result.getValue()));
     }
 
@@ -214,15 +215,14 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                 && (current.getTestChatId() == null || chat.getId().equals(current.getTestChatId()));
     }
 
-    private File executeFile(Voice voice) {
-        String uploadedFileId = voice.getFileId();
+    private File executeFile(String uploadedFileId) {
         final GetFile getFileMethod = new GetFile();
         getFileMethod.setFileId(uploadedFileId);
         try {
             final org.telegram.telegrambots.meta.api.objects.File voiceFile = execute(getFileMethod);
             return downloadFile(voiceFile.getFilePath());
         } catch (final TelegramApiException e) {
-            logger.error(String.format("Cant load file %s, %s", voice, e.toString()), e);
+            logger.error(String.format("Cant load file %s, %s", uploadedFileId, e.toString()), e);
             return null;
         }
     }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.dto.YandexMsgResponse;
+import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.AimTokenService;
 
@@ -40,7 +41,7 @@ public class YaSpeechKitRecognizer implements Recognizer {
         this.aimTokenService = aimTokenService;
     }
 
-    public String recognize(File file) {
+    public String recognize(File file, MessageType type) {
 
         byte[] bytes;
         try {

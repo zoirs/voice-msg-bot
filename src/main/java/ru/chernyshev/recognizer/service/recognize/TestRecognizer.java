@@ -3,6 +3,7 @@ package ru.chernyshev.recognizer.service.recognize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.io.File;
@@ -16,7 +17,7 @@ public class TestRecognizer implements Recognizer {
     private static final Logger logger = LoggerFactory.getLogger(TestRecognizer.class);
 
     @Override
-    public String recognize(File voiceFile) {
+    public String recognize(File voiceFile, MessageType type) {
         logger.info("Test recognize");
         return "Тест распознования " + LocalDateTime.now();
     }

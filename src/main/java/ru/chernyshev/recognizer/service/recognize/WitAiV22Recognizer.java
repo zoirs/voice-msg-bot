@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.dto.WitAiChunkResponse;
+import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.service.MessageValidator;
 import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
@@ -61,12 +62,17 @@ public class WitAiV22Recognizer implements Recognizer {
     }
 
     @Override
-    public String recognize(File fileVoice) {
+    public String recognize(File fileVoice, MessageType type) {
 
-        File file = new FfmpegCommandBuilder(ffmpeg, fileVoice.getAbsolutePath())
-                .withDefaultSettings()
-                .execute();
+        FfmpegCommandBuilder builder = new FfmpegCommandBuilder(ffmpeg, fileVoice.getAbsolutePath());
+        if (type == MessageType.VOICE) {
+            builder.withAudioSettings();
+        }
+        if (type == MessageType.VIDEO) {
+            builder.withVideoNoteSettings();
+        }
 
+        File file = builder.execute();
         if (file == null || !file.exists()) {
             logger.error("Ffmpeg cant process file");
             return null;

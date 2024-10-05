@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
+import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 import ru.chernyshev.recognizer.utils.EnvUtils;
 
@@ -56,7 +56,7 @@ public class DialogFlowRecognizer implements Recognizer {
 
     }
 
-    public String recognize(File voiceFile) {
+    public String recognize(File voiceFile, MessageType type) {
 
         byte[] inputAudio;
         try {

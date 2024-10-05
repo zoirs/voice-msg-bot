@@ -24,7 +24,7 @@ public class FfmpegCommandBuilder {
         this.inputFilePath = inputFilePath;
     }
 
-    public FfmpegCommandBuilder withDefaultSettings() {
+    public FfmpegCommandBuilder withAudioSettings() {
         outputFilePath = UUID.randomUUID().toString() + ".ogg";
         processBuilder = new ProcessBuilder(ffmpegPath, IN_FILE.key, inputFilePath,
                 AUDIO_CODEC.key, "libvorbis",
@@ -33,6 +33,18 @@ public class FfmpegCommandBuilder {
                 // VBR.key, "on",
                 // START_SECOND.key, "1",
                 // DURATION.key, "19",
+                outputFilePath);
+        processBuilder.directory(new File(tmpDir));
+        return this;
+    }
+
+    public FfmpegCommandBuilder withVideoNoteSettings() {
+        outputFilePath = UUID.randomUUID().toString() + ".ogg";
+        processBuilder = new ProcessBuilder(ffmpegPath,
+                IN_FILE.key, inputFilePath,
+                "-codec:a", "libvorbis",
+                "-qscale:a", "3",
+                "-vn",
                 outputFilePath);
         processBuilder.directory(new File(tmpDir));
         return this;
@@ -55,6 +67,7 @@ public class FfmpegCommandBuilder {
     enum Key {
         IN_FILE("-i"),
         AUDIO_CODEC("-acodec"),
+        VIDEO_CODEC("-vcodec"),
         BIT_RATE("-b:a"),
         SAMPLING_FREQUENCY("-ar"),//частода дискритизации
         VBR("-vbr"),//-vbr on is default for -b:a

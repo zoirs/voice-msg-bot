@@ -3,10 +3,10 @@ package ru.chernyshev.recognizer.service.recognize;
 
 import com.google.common.base.Enums;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class RecognizeFactory {
         Preconditions.checkArgument(!activeRecognizers.isEmpty(), "Check configuration");
     }
 
-    public List<Recognizer> create(int duration) {
+    public List<Recognizer> create(int duration, MessageType type) {
         return activeRecognizers.stream()
                 .filter(r -> r.isApplicable(duration))
                 .sorted(Comparator.comparingInt(Recognizer::priority))

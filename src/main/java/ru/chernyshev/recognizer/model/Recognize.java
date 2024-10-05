@@ -20,10 +20,12 @@ public class Recognize implements Supplier<Entry<String, RecognizerType>> {
 
     private final File voiceFile;
     private final List<Recognizer> recognizers;
+    private final MessageType type;
 
-    public Recognize(File voiceFile, List<Recognizer> recognizers) {
+    public Recognize(File voiceFile, List<Recognizer> recognizers, MessageType type) {
         this.voiceFile = voiceFile;
         this.recognizers = recognizers;
+        this.type = type;
     }
 
     @Override
@@ -31,7 +33,7 @@ public class Recognize implements Supplier<Entry<String, RecognizerType>> {
         String text = null;
         RecognizerType recognizerType = null;
         for (Recognizer recognizer : recognizers) {
-            text = recognizer.recognize(voiceFile);
+            text = recognizer.recognize(voiceFile, type);
             recognizerType = recognizer.getType();
             if (!StringUtils.isEmpty(text)) {
                 logger.info("Recognize {}: {}...; (Length {})", recognizerType, org.apache.commons.lang3.StringUtils.substring(text, 0, 10), text.length());
