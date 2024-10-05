@@ -5,5 +5,6 @@ public enum RecognizerType {
     DIALOGFLOW,
     WITAT_V17,
     WITAT_V22,
+    WITAT_V23,
     TEST
 }
