@@ -153,7 +153,7 @@ public class WitAiV22Recognizer implements Recognizer {
 
     @Override
     public boolean isApplicable(int duration) {
-        return duration > 10 && duration < MessageValidator.MAX_SECONDS;
+        return duration < MessageValidator.MAX_SECONDS;
     }
 
     public int priority() {

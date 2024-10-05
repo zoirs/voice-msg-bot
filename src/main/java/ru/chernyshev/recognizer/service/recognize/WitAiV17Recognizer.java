@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.dto.WitAiChunkResponse;
 import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
+import ru.chernyshev.recognizer.service.MessageValidator;
 import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
 
 import java.io.File;
@@ -151,7 +152,7 @@ public class WitAiV17Recognizer implements Recognizer {
 
     @Override
     public boolean isApplicable(int duration) {
-        return duration < 19;
+        return duration < MessageValidator.MAX_SECONDS;
     }
 
     public int priority() {
