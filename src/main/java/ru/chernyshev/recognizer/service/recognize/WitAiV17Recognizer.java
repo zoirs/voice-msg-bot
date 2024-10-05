@@ -94,7 +94,7 @@ public class WitAiV17Recognizer implements Recognizer {
             HttpEntity<byte[]> entity = new HttpEntity<>(bytes, headers);
             ResponseEntity<Resource> responseEntity;
             if (!rateLimiter.tryAcquire()) {
-                logger.warn("Rate too much");
+                logger.warn("Rate too much {}", rateLimiter.getRate());
             }
             countOfUse++;
             try {
