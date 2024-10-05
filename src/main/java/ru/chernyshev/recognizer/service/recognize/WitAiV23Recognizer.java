@@ -96,6 +96,7 @@ public class WitAiV23Recognizer implements Recognizer {
             ResponseEntity<Resource> responseEntity;
             if (!rateLimiter.tryAcquire()) {
                 logger.warn("Rate too much {}", rateLimiter.getRate());
+                MessageValidator.sleep();
             }
             countOfUse++;
             try {

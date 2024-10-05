@@ -6,5 +6,6 @@ public enum RecognizerType {
     WITAT_V17,
     WITAT_V22,
     WITAT_V23,
+    WITAT_V24,
     TEST
 }

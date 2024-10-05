@@ -72,4 +72,12 @@ public class MessageValidator {
         ChatEntity chatEntity = chatService.getOrCreate(receivedMsg.getChat());
         return validate(chatEntity, receivedMsg, receivedMsg.getDate());
     }
+
+
+    public static void sleep() {
+//        try {
+//            Thread.sleep(100);
+//        } catch (InterruptedException ignore) {
+//        }
+    }
 }

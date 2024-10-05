@@ -32,9 +32,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class WitAiV22Recognizer implements Recognizer {
+public class WitAiV24Recognizer implements Recognizer {
 
-    private static final Logger logger = LoggerFactory.getLogger(WitAiV22Recognizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(WitAiV24Recognizer.class);
 
     private final String ffmpeg;
     private final RestTemplate restTemplate;
@@ -47,8 +47,8 @@ public class WitAiV22Recognizer implements Recognizer {
     private int countOfUse;
 
     @Autowired
-    public WitAiV22Recognizer(@Value("${ffmpeg.path}") String ffmpeg,
-                              @Value("${WITAT_V22}") List<String> configs,
+    public WitAiV24Recognizer(@Value("${ffmpeg.path}") String ffmpeg,
+                              @Value("${WITAT_V24}") List<String> configs,
                               Environment env,
                               RestTemplate restTemplate,
                               ObjectMapper objectMapper) {
@@ -149,7 +149,7 @@ public class WitAiV22Recognizer implements Recognizer {
 
     @Override
     public RecognizerType getType() {
-        return RecognizerType.WITAT_V22;
+        return RecognizerType.WITAT_V24;
     }
 
     @Override
