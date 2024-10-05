@@ -36,7 +36,7 @@ public class Recognize implements Supplier<Entry<String, RecognizerType>> {
             text = recognizer.recognize(voiceFile, type);
             recognizerType = recognizer.getType();
             if (!StringUtils.isEmpty(text)) {
-                logger.info("Recognize {}: {}...; (Length {})", recognizerType, org.apache.commons.lang3.StringUtils.substring(text, 0, 10), text.length());
+                logger.info("Recognize [{}] {}: {}...; (Length {})", recognizerType, type, org.apache.commons.lang3.StringUtils.substring(text, 0, 10), text.length());
                 break;
             }
         }
