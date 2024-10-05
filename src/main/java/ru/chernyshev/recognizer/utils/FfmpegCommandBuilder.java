@@ -3,8 +3,10 @@ package ru.chernyshev.recognizer.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +46,8 @@ public class FfmpegCommandBuilder {
                 IN_FILE.key, inputFilePath,
                 "-codec:a", "libvorbis",
                 "-qscale:a", "3",
+                "-map", "0:a",
+                "-async", "1",
                 "-vn",
                 outputFilePath);
         processBuilder.directory(new File(tmpDir));
@@ -53,6 +57,18 @@ public class FfmpegCommandBuilder {
     public File execute() {
         try {
             Process start = processBuilder.start();
+
+//            BufferedReader inReader = new BufferedReader(new InputStreamReader(start.getInputStream()));
+//            String lineIn;
+//            while ((lineIn = inReader.readLine()) != null) {
+//                logger.info("=== " + lineIn);
+//            }
+//            BufferedReader errorReader = new BufferedReader(new InputStreamReader(start.getErrorStream()));
+//            String line;
+//            while ((line = errorReader.readLine()) != null) {
+//                logger.info("=== " + line);
+//            }
+
             start.waitFor(30, TimeUnit.SECONDS);
         } catch (IOException e) {
             logger.error("Cant run ffmpeg process", e);
