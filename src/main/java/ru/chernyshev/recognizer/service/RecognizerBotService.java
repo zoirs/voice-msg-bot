@@ -236,4 +236,14 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     public String getBotToken() {
         return botToken;
     }
+
+    public boolean sendDirect(SendMessage sendMsg) {
+        try {
+            execute(sendMsg);
+        } catch (TelegramApiException e) {
+            logger.warn("Cant send direct message {}", e.toString());
+            return false;
+        }
+        return true;
+    }
 }

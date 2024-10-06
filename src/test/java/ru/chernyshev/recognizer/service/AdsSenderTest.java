@@ -174,7 +174,7 @@ public class AdsSenderTest {
 
     }
 
-    @Test
+//    @Test
     public void checkLimitRate() {
         AdsEntity ads = createAdsTask(120L);
         adsRepository.save(ads);

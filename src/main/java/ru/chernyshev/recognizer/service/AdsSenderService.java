@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.chernyshev.recognizer.entity.AdsSended;
@@ -22,6 +23,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AdsSenderService {
@@ -61,19 +64,19 @@ public class AdsSenderService {
 
         logger.info("Start sending for task {}", current);
 
-        if (current.getTestChatId() != null) {
-            logger.info("Send to test chat {}", current.getTestChatId());
-            Optional<ChatEntity> chatEntity = chatRepository.findById(current.getTestChatId());
-            if (!chatEntity.isPresent()) {
-                logger.warn("Error test chat id {}", current.getTestChatId());
-                return;
-            }
-            SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.get().getTelegramId());
-            boolean result = recognizerBotService.sendDirect(sendPhoto);
-            adsService.saveAdsSendInfo(current.getId(), current.getTestChatId(), null, result);
-            current.inc();
-            return;
-        }
+//        if (current.getTestChatId() != null) {
+//            logger.info("Send to test chat {}", current.getTestChatId());
+//            Optional<ChatEntity> chatEntity = chatRepository.findById(current.getTestChatId());
+//            if (!chatEntity.isPresent()) {
+//                logger.warn("Error test chat id {}", current.getTestChatId());
+//                return;
+//            }
+//            SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.get().getTelegramId());
+//            boolean result = recognizerBotService.sendDirect(sendPhoto);
+//            adsService.saveAdsSendInfo(current.getId(), current.getTestChatId(), null, result);
+//            current.inc();
+//            return;
+//        }
 
         Optional<AdsSended> firstForThisAds = Optional.empty();
         AdsSended lastAdsSend = adsService.getLastSended();
@@ -88,15 +91,29 @@ public class AdsSenderService {
             }
 
             logger.info("Start send batch from {} (telegramId={}) to {} (telegramId={})", batchChats.get(0).getId(), batchChats.get(0).getTelegramId(), batchChats.get(batchChats.size() - 1).getId(), batchChats.get(batchChats.size() - 1).getTelegramId());
+            Set<Long> chatIds = batchChats.stream().map(ChatEntity::getId).collect(Collectors.toSet());
+            Set<Long> successfullySent = adsService.getResultFor(160L, chatIds);// для отправки об обновлении
             for (ChatEntity chatEntity : batchChats) {
                 if (firstForThisAds.map(q -> q.getChatId().equals(chatEntity.getId())).orElse(false)) {
                     logger.info("Ads was send to all chats, break sending");
                     return;
                 }
-                SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.getTelegramId());
-                rateLimiter.acquire();
-                boolean result = recognizerBotService.sendDirect(sendPhoto);
-                logger.info("Send to chatID {} (telegramId {}) success = {}; For ads {} send {}", chatEntity.getId(), chatEntity.getTelegramId(), result, current.getId(), current.getCurrentCount());
+                boolean result;
+                if (successfullySent.contains(chatEntity.getId())) {
+                    if (current.getFilePath() != null) {
+                        SendPhoto sendPhoto = prepareAdsMessage(current, chatEntity.getTelegramId());
+                        rateLimiter.acquire();
+                        result = recognizerBotService.sendDirect(sendPhoto);
+                    } else {
+                        SendMessage sendMsg = prepareAdsMessageSimple(current, chatEntity.getTelegramId());
+                        rateLimiter.acquire();
+                        result = recognizerBotService.sendDirect(sendMsg);
+                    }
+                    logger.info("Send to chatID {} (telegramId {}) success = {}; For ads {} send {}", chatEntity.getId(), chatEntity.getTelegramId(), result, current.getId(), current.getCurrentCount());
+                } else {
+                    logger.info("Send to chatID {} (telegramId {}) was skip; For ads {} send {}", chatEntity.getId(), chatEntity.getTelegramId(), current.getId(), current.getCurrentCount());
+                    result = false;
+                }
                 adsService.saveAdsSendInfo(current.getId(), chatEntity.getId(), null, result);
                 current.inc();
                 lastChatId = chatEntity.getId();
@@ -106,6 +123,31 @@ public class AdsSenderService {
             }
         }
         logger.info("Complete sending for task {}", current);
+    }
+
+    private SendMessage prepareAdsMessageSimple(AdsButton adsEntity, Long telegramChatId) {
+        if (adsEntity == null || adsEntity.getType() != AdsType.DIRECT) {
+            return null;
+        }
+        if (adsEntity.getUrl() == null) {
+            logger.warn("Ads link is empty");
+            return null;
+        }
+        if (!adsEntity.getText().contains(LINK_PATTERN)) {
+            logger.warn("Ads text no places for ads link");
+            return null;
+        }
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(telegramChatId));// 268305576
+        sendMessage.setParseMode("MarkdownV2");
+        sendMessage.disableWebPagePreview();
+        String encodedUrl = adsEntity.getUrl().replaceAll("\\.", "\\\\.");
+        String text = adsEntity.getText()
+                .replaceAll("\\.", "\\\\.")
+                .replaceAll("-", "\\\\-")
+                .replace(LINK_PATTERN, encodedUrl);
+        sendMessage.setText(text);
+        return sendMessage;
     }
 
     private SendPhoto prepareAdsMessage(AdsButton adsEntity, Long telegramChatId) {

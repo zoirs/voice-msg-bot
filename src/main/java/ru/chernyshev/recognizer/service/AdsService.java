@@ -16,6 +16,7 @@ import ru.chernyshev.recognizer.repository.AdsRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -86,5 +87,9 @@ public class AdsService {
             return null;
         }
         return adsButton;
+    }
+
+    public Set<Long> getResultFor(Long ads_id, Set<Long> chatIds) {
+        return adsDirectRepository.getResult(ads_id, chatIds).stream().map(AdsSended::getChatId).collect(Collectors.toSet());
     }
 }
