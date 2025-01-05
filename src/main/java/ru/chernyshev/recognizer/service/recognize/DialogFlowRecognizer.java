@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 //@Service
 public class DialogFlowRecognizer implements Recognizer {
@@ -58,7 +58,7 @@ public class DialogFlowRecognizer implements Recognizer {
 
     }
 
-    public String recognize(File voiceFile, MessageType type, Consumer<RecognizeResult> entryConsumer) {
+    public String recognize(File voiceFile, MessageType type, Function<RecognizeResult, Boolean> entryConsumer) {
 
         byte[] inputAudio;
         try {

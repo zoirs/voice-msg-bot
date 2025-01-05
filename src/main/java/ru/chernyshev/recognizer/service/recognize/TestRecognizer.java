@@ -9,7 +9,7 @@ import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static ru.chernyshev.recognizer.model.RecognizerType.TEST;
 
@@ -19,7 +19,7 @@ public class TestRecognizer implements Recognizer {
     private static final Logger logger = LoggerFactory.getLogger(TestRecognizer.class);
 
     @Override
-    public String recognize(File voiceFile, MessageType type, Consumer<RecognizeResult> entryConsumer) {
+    public String recognize(File voiceFile, MessageType type, Function<RecognizeResult, Boolean> entryConsumer) {
         logger.info("Test recognize");
         return "Тест распознования " + LocalDateTime.now();
     }

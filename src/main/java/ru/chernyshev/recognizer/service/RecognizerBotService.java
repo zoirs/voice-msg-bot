@@ -14,11 +14,13 @@ import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.chernyshev.recognizer.RecognizeResult;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.*;
@@ -33,7 +35,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 @Service
 public class RecognizerBotService extends TelegramLongPollingBot {
@@ -132,10 +133,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         List<Recognizer> recognizers = recognizeFactory.create(MessageService.getDuration(receivedMsg), type);
 
-        Consumer<RecognizeResult> entryConsumer = result -> updateResult(messageEntity, result.getText(), result.getRecognizerType());
         CompletableFuture
                 .supplyAsync(() -> executeFile(fileId), service)
-                .thenApply(file -> Recognize.apply(file, recognizers, type, entryConsumer))
+                .thenApply(file -> Recognize.apply(file, recognizers, type, result -> updateResult(messageEntity, result.getText(), result.getRecognizerType())))
                 .thenAccept(result -> updateResult(messageEntity, result.getKey(), result.getValue()))
         ;
     }
@@ -153,8 +153,10 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         return true;
     }
 
-    private void updateResult(MessageEntity messageEntity, String text, RecognizerType recognizerType) {
-
+    private boolean updateResult(MessageEntity messageEntity, String text, RecognizerType recognizerType) {
+        if (MessageValidator.SKIP.equals(text)) {
+            return false;
+        }
         String from = FromBuilder.create(messageEntity.getUser()).setItalic().get();
         ChatEntity chat = messageEntity.getChat();
 
@@ -181,9 +183,11 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             if (recognizerType != null) {
                 messageService.updateSuccess(messageEntity, recognizerType, editMessage.getMessageId());
             }
+            return true;
         } catch (TelegramApiException e) {
-            logger.error(String.format("Cant send message %s", e.toString()), e);
+            logger.error(String.format("Cant send message to chat %s; %s", chat.getTelegramId(), e), e);
             messageService.update(messageEntity, MessageResult.CANT_UPDATE, editMessage.getMessageId());
+            return false;
         }
     }
 
@@ -209,7 +213,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return execute(message);
         } catch (TelegramApiException e) {
             logger.error(String.format("Cant send message to chat %s %s, error %s", chat.getId(), chat.getTitle(), e), e);
-            if (e.toString().contains("have no rights to send a message")) {
+            if (e.toString().contains("have no rights to send a message") ||
+                    e.toString().contains("not enough rights to send text messages to the chat")) {
                 chatService.banned(chat);
             }
         }

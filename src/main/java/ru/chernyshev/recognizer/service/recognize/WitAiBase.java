@@ -20,18 +20,20 @@ import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.service.MessageValidator;
 import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class WitAiBase implements Recognizer {
 
     private static final Logger logger = LoggerFactory.getLogger(WitAiBase.class);
+    private static final int MIN_UPDATE_INTERVAL = 500;
 
     private final String ffmpeg;
     private final RestTemplate restTemplate;
@@ -59,7 +61,7 @@ public abstract class WitAiBase implements Recognizer {
 
 
     @Override
-    public String recognize(File fileVoice, MessageType type, Consumer<RecognizeResult> entryConsumer) {
+    public String recognize(File fileVoice, MessageType type, Function<RecognizeResult, Boolean> progressCallback) {
         FfmpegCommandBuilder builder = new FfmpegCommandBuilder(ffmpeg, fileVoice.getAbsolutePath());
         int volume = builder.getVolume();
         if (type == MessageType.VOICE) {
@@ -101,8 +103,9 @@ public abstract class WitAiBase implements Recognizer {
                     request.getBody().write(bytes);
                 };
                 return restTemplate.execute(URI.create(setting.getUrl()), HttpMethod.POST, requestCallback, clientHttpResponse -> {
-                    try (InputStream inputStream = clientHttpResponse.getBody()) {
+                    try (InputStream inputStream = new BufferedInputStream(clientHttpResponse.getBody())) {
                         String lastText = "";
+                        long lastExecutionTime = 0L;
                         JsonParser jp = jsonFactory.createParser(inputStream);
                         jp.setCodec(objectMapper);
                         jp.nextToken();
@@ -113,9 +116,16 @@ public abstract class WitAiBase implements Recognizer {
                                 if (!StringUtils.isEmpty(currentText)) {
                                     if (node.has("is_final") && node.get("is_final").asBoolean()) {
                                         return currentText;
-                                    } else if (!currentText.equals(lastText) &&  node.has("speech")) {
+                                    } else if (!currentText.equals(lastText) && node.has("speech")) {
                                         lastText = currentText;
-                                        entryConsumer.accept(new RecognizeResult(currentText + " ⏳", null));
+                                        long currentTime = System.currentTimeMillis();
+                                        if (currentTime - lastExecutionTime >= MIN_UPDATE_INTERVAL) {
+                                            Boolean result = progressCallback.apply(new RecognizeResult(currentText + " ⏳", null));
+                                            if (!result) {
+                                                return MessageValidator.SKIP;
+                                            }
+                                            lastExecutionTime = currentTime;
+                                        }
                                     }
                                 }
 

@@ -5,10 +5,10 @@ import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.io.File;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface Recognizer {
-    String recognize(File voiceFile, MessageType type, Consumer<RecognizeResult> entryConsumer);
+    String recognize(File voiceFile, MessageType type, Function<RecognizeResult, Boolean> entryConsumer);
 
     RecognizerType getType();
 

@@ -15,6 +15,7 @@ import java.time.Instant;
 public class MessageValidator {
     private static final int MAX_SIZE = 10 * 1024 * 1024;
     public static final int MAX_SECONDS = 180;
+    public static final String SKIP = "SKIP";
 
     private static final Logger logger = LoggerFactory.getLogger(MessageValidator.class);
 

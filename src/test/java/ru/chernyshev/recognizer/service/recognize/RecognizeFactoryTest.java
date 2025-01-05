@@ -9,7 +9,7 @@ import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.io.File;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.hamcrest.core.Is.is;
 
@@ -47,7 +47,7 @@ public class RecognizeFactoryTest {
     private static class FakeYaRecognizer implements Recognizer{
 
         @Override
-        public String recognize(File voiceFile, MessageType type, Consumer<RecognizeResult> entryConsumer) {
+        public String recognize(File voiceFile, MessageType type, Function<RecognizeResult, Boolean> entryConsumer) {
             return null;
         }
 

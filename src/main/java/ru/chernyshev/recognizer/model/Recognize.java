@@ -13,13 +13,13 @@ import java.nio.file.Files;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Recognize {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
 
-    public static Entry<String, RecognizerType> apply(File voiceFile, List<Recognizer> recognizers, MessageType type, Consumer<RecognizeResult> progressCallback) {
+    public static Entry<String, RecognizerType> apply(File voiceFile, List<Recognizer> recognizers, MessageType type, Function<RecognizeResult, Boolean> progressCallback) {
         String text = null;
         RecognizerType recognizerType = null;
         for (Recognizer recognizer : recognizers) {

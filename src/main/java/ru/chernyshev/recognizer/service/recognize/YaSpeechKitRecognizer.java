@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Component
 public class YaSpeechKitRecognizer implements Recognizer {
@@ -43,7 +43,7 @@ public class YaSpeechKitRecognizer implements Recognizer {
         this.aimTokenService = aimTokenService;
     }
 
-    public String recognize(File file, MessageType type, Consumer<RecognizeResult> entryConsumer) {
+    public String recognize(File file, MessageType type, Function<RecognizeResult, Boolean> entryConsumer) {
 
         byte[] bytes;
         try {
