@@ -3,11 +3,13 @@ package ru.chernyshev.recognizer.service.recognize;
 import org.assertj.core.util.Lists;
 import org.junit.Assert;
 import org.junit.Test;
+import ru.chernyshev.recognizer.RecognizeResult;
 import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
 
 import java.io.File;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.hamcrest.core.Is.is;
 
@@ -45,7 +47,7 @@ public class RecognizeFactoryTest {
     private static class FakeYaRecognizer implements Recognizer{
 
         @Override
-        public String recognize(File voiceFile, MessageType type) {
+        public String recognize(File voiceFile, MessageType type, Consumer<RecognizeResult> entryConsumer) {
             return null;
         }
 

@@ -14,6 +14,8 @@ import static ru.chernyshev.recognizer.utils.FfmpegCommandBuilder.Key.*;
 
 public class FfmpegCommandBuilder {
     private static final Logger logger = LoggerFactory.getLogger(FfmpegCommandBuilder.class);
+    private static final int DEFAULT_VOLUME = -45;
+    private static final String VOLUME_PATTERN = "mean_volume:\\s(-?\\d+\\.\\d*)";
 
     private final String ffmpegPath;
     private final String inputFilePath;
@@ -26,7 +28,8 @@ public class FfmpegCommandBuilder {
         this.inputFilePath = inputFilePath;
     }
 
-    public FfmpegCommandBuilder withAudioSettings() {
+    public FfmpegCommandBuilder withAudioSettings(int meanVolume) {
+        int silentBorder = meanVolume - 10;
         outputFilePath = UUID.randomUUID().toString() + ".ogg";
         processBuilder = new ProcessBuilder(ffmpegPath, IN_FILE.key, inputFilePath,
                 AUDIO_CODEC.key, "libvorbis",
@@ -35,13 +38,14 @@ public class FfmpegCommandBuilder {
                 // VBR.key, "on",
                 // START_SECOND.key, "1",
                 // DURATION.key, "19",
-                "-af", "silenceremove=start_periods=1:stop_periods=-1:stop_duration=0.2:start_threshold=-45dB:stop_threshold=-45dB",
+                "-af", String.format("silenceremove=start_periods=1:stop_periods=-1:stop_duration=0.2:start_threshold=%sdB:stop_threshold=%sdB", silentBorder, silentBorder),
                 outputFilePath);
         processBuilder.directory(new File(tmpDir));
         return this;
     }
 
-    public FfmpegCommandBuilder withVideoNoteSettings() {
+    public FfmpegCommandBuilder withVideoNoteSettings(int meanVolume) {
+        int silentBorder = meanVolume - 10;
         outputFilePath = UUID.randomUUID().toString() + ".ogg";
         processBuilder = new ProcessBuilder(ffmpegPath,
                 IN_FILE.key, inputFilePath,
@@ -49,7 +53,7 @@ public class FfmpegCommandBuilder {
                 "-qscale:a", "3",
                 "-map", "0:a",
                 "-async", "1",
-                "-af", "silenceremove=start_periods=1:stop_periods=-1:stop_duration=0.2:start_threshold=-45dB:stop_threshold=-45dB",
+                "-af", String.format("silenceremove=start_periods=1:stop_periods=-1:stop_duration=0.2:start_threshold=%sdB:stop_threshold=%sdB", silentBorder, silentBorder),
                 "-vn",
                 outputFilePath);
         processBuilder.directory(new File(tmpDir));
@@ -59,18 +63,6 @@ public class FfmpegCommandBuilder {
     public File execute() {
         try {
             Process start = processBuilder.start();
-
-//            BufferedReader inReader = new BufferedReader(new InputStreamReader(start.getInputStream()));
-//            String lineIn;
-//            while ((lineIn = inReader.readLine()) != null) {
-//                logger.info("=== " + lineIn);
-//            }
-//            BufferedReader errorReader = new BufferedReader(new InputStreamReader(start.getErrorStream()));
-//            String line;
-//            while ((line = errorReader.readLine()) != null) {
-//                logger.info("=== " + line);
-//            }
-
             start.waitFor(30, TimeUnit.SECONDS);
         } catch (IOException e) {
             logger.error("Cant run ffmpeg process", e);
@@ -80,6 +72,55 @@ public class FfmpegCommandBuilder {
             return null;
         }
         return new File(tmpDir, outputFilePath);
+    }
+
+    public int getVolume() {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(ffmpegPath,
+                    IN_FILE.key, inputFilePath,
+                    "-af", "volumedetect",
+                    "-f", "null", "-");
+
+            Process start = processBuilder.start();
+            String line;
+
+//            BufferedReader inReader = new BufferedReader(new InputStreamReader(start.getInputStream()));
+//            while ((line = inReader.readLine()) != null) {
+//                logger.info("== {}", line);
+//                if (line.contains("mean_volume")) {
+//                    return parse(line);
+//                }
+//            }
+
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(start.getErrorStream()));
+            while ((line = errorReader.readLine()) != null) {
+                if (line.contains("mean_volume")) {
+                    return parse(line);
+                }
+            }
+
+            start.waitFor(30, TimeUnit.SECONDS);
+        } catch (IOException e) {
+            logger.error("Cant run ffmpeg process", e);
+            return DEFAULT_VOLUME;
+        } catch (InterruptedException e) {
+            logger.error("Ffmpeg process wait error", e);
+            return DEFAULT_VOLUME;
+        }
+        return DEFAULT_VOLUME;
+    }
+
+    private static int parse(String logLine) {
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(VOLUME_PATTERN);
+        java.util.regex.Matcher matcher = pattern.matcher(logLine);
+
+        if (matcher.find()) {
+            double meanVolume = Double.parseDouble(matcher.group(1));
+            return (int) meanVolume;
+        } else {
+            logger.error("Mean Volume not found in {}!", logLine);
+        }
+        return DEFAULT_VOLUME;
     }
 
     enum Key {

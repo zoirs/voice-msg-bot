@@ -25,15 +25,12 @@ public class MessageValidator {
         this.chatService = chatService;
     }
 
-    private MessageResult validate(ChatEntity chat, Message recivedMsg, Integer sendDate) {
+    private MessageResult validate(ChatEntity chat, Message recivedMsg, Integer sendDate){
 
-        if (recivedMsg.hasVoice()) {
-            String mimeType = recivedMsg.getVoice().getMimeType();
-            if (!"audio/ogg".equals(mimeType)) {
-                logger.info("Incorrect audio format {}", mimeType);
-                return MessageResult.VOICE_MSG_INCORRECT_FORMAT;
-            }
-        }
+//        if (!"audio/ogg".equals(voice.getMimeType())) {
+//            logger.info("Incorrect audio format {}", voice.getMimeType());
+//            return MessageResult.VOICE_MSG_INCORRECT_FORMAT;
+//        }
 
         if (chat.getState() != ChatStatus.ACTIVE) {
             logger.info("Chat {} is {}", chat.getId(), chat.getState());
@@ -75,9 +72,9 @@ public class MessageValidator {
 
 
     public static void sleep() {
-//        try {
-//            Thread.sleep(100);
-//        } catch (InterruptedException ignore) {
-//        }
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignore) {
+        }
     }
 }

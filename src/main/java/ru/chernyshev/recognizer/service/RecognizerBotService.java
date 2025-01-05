@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.chernyshev.recognizer.RecognizeResult;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.*;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 @Service
 public class RecognizerBotService extends TelegramLongPollingBot {
@@ -130,10 +132,12 @@ public class RecognizerBotService extends TelegramLongPollingBot {
 
         List<Recognizer> recognizers = recognizeFactory.create(MessageService.getDuration(receivedMsg), type);
 
+        Consumer<RecognizeResult> entryConsumer = result -> updateResult(messageEntity, result.getText(), result.getRecognizerType());
         CompletableFuture
                 .supplyAsync(() -> executeFile(fileId), service)
-                .thenApply(file -> new Recognize(file, recognizers, type).get())
-                .thenAccept(result -> updateResult(messageEntity, result.getKey(), result.getValue()));
+                .thenApply(file -> Recognize.apply(file, recognizers, type, entryConsumer))
+                .thenAccept(result -> updateResult(messageEntity, result.getKey(), result.getValue()))
+        ;
     }
 
     boolean sendDirect(SendPhoto sendPhoto) {
@@ -174,7 +178,9 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
         try {
             execute(editMessage);
-            messageService.updateSuccess(messageEntity, recognizerType, editMessage.getMessageId());
+            if (recognizerType != null) {
+                messageService.updateSuccess(messageEntity, recognizerType, editMessage.getMessageId());
+            }
         } catch (TelegramApiException e) {
             logger.error(String.format("Cant send message %s", e.toString()), e);
             messageService.update(messageEntity, MessageResult.CANT_UPDATE, editMessage.getMessageId());

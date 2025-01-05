@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import ru.chernyshev.recognizer.RecognizeResult;
 import ru.chernyshev.recognizer.dto.YandexMsgResponse;
 import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.model.RecognizerType;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.function.Consumer;
 
 @Component
 public class YaSpeechKitRecognizer implements Recognizer {
@@ -41,7 +43,7 @@ public class YaSpeechKitRecognizer implements Recognizer {
         this.aimTokenService = aimTokenService;
     }
 
-    public String recognize(File file, MessageType type) {
+    public String recognize(File file, MessageType type, Consumer<RecognizeResult> entryConsumer) {
 
         byte[] bytes;
         try {
