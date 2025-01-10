@@ -89,6 +89,12 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             if (from != null) {
                 logger.info("New user add bot {}", from);
                 userService.getOrCreate(from);
+                SendMessage sendMsg = new SendMessage();
+                sendMsg.setText("Пришлите мне голосовое сообщение и я преобразую его в текст.\n\n" +
+                        "Добавьте меня в любой чат, и все голосовые сообщение в чате будут преобразованны в текст.\n\n" +
+                        "Канал разработчика @chernyshev_ru");
+                sendMsg.setChatId(receivedMsg.getChatId());
+                sendDirect(sendMsg);
             }
             Chat chat = receivedMsg.getChat();
             if (chat != null) {
