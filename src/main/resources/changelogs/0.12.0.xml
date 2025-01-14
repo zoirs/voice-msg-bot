@@ -1,0 +1,15 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.12.0">
+
+        <sql>
+            INSERT INTO public.ads(
+            id, start, finish, url, text, type, file_path, max_count, test_chat_id)
+            VALUES (-1, '2025-01-01 00:00:00', '2025-01-01 00:00:01', 'https://t.me/chernyshev_ru', 'Канал разработчика бота', 'RECOGNIZER_MESSAGE', -1, -1, null);
+        </sql>
+
+    </changeSet>
+</databaseChangeLog>

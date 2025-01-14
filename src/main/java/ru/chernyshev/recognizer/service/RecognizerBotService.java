@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
+    private static final int RANDOMISER_ADS = 10;
 
     private final ExecutorService service;
     private final RecognizeFactory recognizeFactory;
@@ -165,6 +166,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         if (MessageValidator.SKIP.equals(text)) {
             return false;
         }
+        boolean isFinal = recognizerType != null;
         String from = FromBuilder.create(messageEntity.getUser()).setItalic().get();
         ChatEntity chat = messageEntity.getChat();
 
@@ -173,7 +175,14 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         editMessage.setChatId(String.valueOf(chat.getTelegramId()));
         editMessage.setMessageId(messageEntity.getTelegramId());
         boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
-        editMessage.setText(from + (recognizeSuccessfully ? text : "Не распознано"));
+        String adsMsg = "";
+        if (isFinal && (int) (Math.random() * ((RANDOMISER_ADS) + 1)) == 0) {
+            adsService.saveAdsSendInfo(-1L, chat.getId(), messageEntity.getId(), true);
+            editMessage.disableWebPagePreview();
+            adsMsg = "\n---\n[Канал](https://t.me/chernyshev_ru) разработчика бота";
+            logger.info("Message with ads");
+        }
+        editMessage.setText(from + (recognizeSuccessfully ? (text + adsMsg) : "Не распознано"));
         if (recognizeSuccessfully) {
             AdsButton current = adsService.getCurrent();
             if (isNeedShowAds(chat, current)) {
@@ -188,7 +197,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
         try {
             execute(editMessage);
-            if (recognizerType != null) {
+            if (isFinal) {
                 messageService.updateSuccess(messageEntity, recognizerType, editMessage.getMessageId());
             }
             return true;
