@@ -1,6 +1,5 @@
 package ru.chernyshev.recognizer.service;
 
-import com.google.common.collect.Lists;
 import io.jsonwebtoken.lang.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +17,8 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.chernyshev.recognizer.entity.AdsInMsg;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.entity.MessageEntity;
 import ru.chernyshev.recognizer.model.*;
@@ -30,8 +28,8 @@ import ru.chernyshev.recognizer.utils.FromBuilder;
 import ru.chernyshev.recognizer.utils.MessageKeys;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +38,7 @@ import java.util.concurrent.Executors;
 public class RecognizerBotService extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(RecognizerBotService.class);
-    private static final int RANDOMISER_ADS = 10;
+    private static final Random random = new Random();
 
     private final ExecutorService service;
     private final RecognizeFactory recognizeFactory;
@@ -51,7 +49,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
     private final MessageValidator messageValidator;
     private final MessageSource messageSource;
     private final UserService userService;
-    private final AdsService adsService;
+    private final AdsForMsgService adsForMsgService;
 
     @Autowired
     public RecognizerBotService(RecognizeFactory recognizeFactory,
@@ -63,7 +61,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
                                 MessageValidator messageValidator,
                                 MessageSource messageSource,
                                 UserService userService,
-                                AdsService adsService) {
+                                AdsForMsgService adsForMsgService) {
         this.recognizeFactory = recognizeFactory;
         this.botToken = botToken;
         this.botUsername = botUsername;
@@ -72,7 +70,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         this.messageValidator = messageValidator;
         this.messageSource = messageSource;
         this.userService = userService;
-        this.adsService = adsService;
+        this.adsForMsgService = adsForMsgService;
         this.service = Executors.newFixedThreadPool(threadCount);
     }
 
@@ -167,6 +165,12 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return false;
         }
         boolean isFinal = recognizerType != null;
+        boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
+        if (!recognizeSuccessfully && !isFinal) {
+            logger.info("Recognise unsuccessfully, but not final");
+            return true;
+        }
+
         String from = FromBuilder.create(messageEntity.getUser()).setItalic().get();
         ChatEntity chat = messageEntity.getChat();
 
@@ -174,27 +178,16 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         editMessage.enableMarkdown(true);
         editMessage.setChatId(String.valueOf(chat.getTelegramId()));
         editMessage.setMessageId(messageEntity.getTelegramId());
-        boolean recognizeSuccessfully = !StringUtils.isEmpty(text);
         String adsMsg = "";
-        if (isFinal && (int) (Math.random() * ((RANDOMISER_ADS) + 1)) == 0) {
-            adsService.saveAdsSendInfo(-1L, chat.getId(), messageEntity.getId(), true);
-            editMessage.disableWebPagePreview();
-            adsMsg = "\n---\n[Канал](https://t.me/chernyshev_ru) разработчика бота";
-            logger.info("Message with ads");
-        }
-        editMessage.setText(from + (recognizeSuccessfully ? (text + adsMsg) : "Не распознано"));
-        if (recognizeSuccessfully) {
-            AdsButton current = adsService.getCurrent();
-            if (isNeedShowAds(chat, current)) {
-                InlineKeyboardButton adsButton = new InlineKeyboardButton(current.getText());
-                adsButton.setUrl(current.getUrl());
-                List<List<InlineKeyboardButton>> keyBoard = new ArrayList<>();
-                keyBoard.add(Lists.newArrayList(adsButton));
-                InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(keyBoard);
-                editMessage.setReplyMarkup(replyMarkup);
-                adsService.saveAdsSendInfo(current.getId(), chat.getId(), messageEntity.getId(), true);
+        if (recognizeSuccessfully && isFinal) {
+            AdsInMsg adsInMsg = adsForMsgService.getAdsForMsg();
+            if (adsInMsg != null && probability(adsInMsg)) {
+                adsForMsgService.saveAdsSendInfo(adsInMsg.getId(), chat.getId(), messageEntity.getId());
+                editMessage.disableWebPagePreview();
+                adsMsg = "\n---\n" + adsInMsg.getText();
             }
         }
+        editMessage.setText(from + (recognizeSuccessfully ? (text + adsMsg) : "Не распознано"));
         try {
             execute(editMessage);
             if (isFinal) {
@@ -238,9 +231,14 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         return null;
     }
 
-    private boolean isNeedShowAds(ChatEntity chat, AdsButton current) {
-        return current != null && current.getType() == AdsType.RECOGNIZER_MESSAGE
-                && (current.getTestChatId() == null || chat.getId().equals(current.getTestChatId()));
+    private static boolean probability(AdsInMsg adsInMsg) {
+        if (adsInMsg.getPercent() >= 100) {
+            return true;
+        }
+        if (adsInMsg.getPercent() <= 0) {
+            return false;
+        }
+        return random.nextInt(100) <= adsInMsg.getPercent();
     }
 
     private File executeFile(String uploadedFileId) {

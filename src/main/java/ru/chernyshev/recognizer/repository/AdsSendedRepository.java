@@ -9,7 +9,7 @@ import ru.chernyshev.recognizer.entity.AdsSended;
 import java.util.List;
 import java.util.Set;
 
-public interface AdsDirectRepository extends CrudRepository<AdsSended, Long> {
+public interface AdsSendedRepository extends CrudRepository<AdsSended, Long> {
 
     @Query(value = "select s from AdsSended s where s.adsId not in (select id from AdsEntity where type != 'DIRECT' or testChatId is not null) order by id desc")
     List<AdsSended> getLastDirectSended(Pageable pageable);

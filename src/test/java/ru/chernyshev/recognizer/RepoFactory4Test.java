@@ -11,7 +11,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import ru.chernyshev.recognizer.entity.ChatEntity;
-import ru.chernyshev.recognizer.repository.AdsDirectRepository;
+import ru.chernyshev.recognizer.repository.AdsSendedRepository;
 import ru.chernyshev.recognizer.repository.AdsRepository;
 import ru.chernyshev.recognizer.repository.ChatRepository;
 import ru.chernyshev.recognizer.repository.MessageRepository;
@@ -19,7 +19,7 @@ import ru.chernyshev.recognizer.repository.MessageRepository;
 import javax.persistence.EntityManagerFactory;
 
 @Configuration
-@EnableJpaRepositories(basePackageClasses = {ChatRepository.class, MessageRepository.class, AdsDirectRepository.class, AdsRepository.class})
+@EnableJpaRepositories(basePackageClasses = {ChatRepository.class, MessageRepository.class, AdsSendedRepository.class, AdsRepository.class})
 public class RepoFactory4Test {
     @Bean
     public EmbeddedDatabase dataSource() {

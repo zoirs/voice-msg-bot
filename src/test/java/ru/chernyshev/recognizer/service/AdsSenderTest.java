@@ -26,7 +26,7 @@ import ru.chernyshev.recognizer.entity.AdsEntity;
 import ru.chernyshev.recognizer.entity.ChatEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
 import ru.chernyshev.recognizer.model.AdsType;
-import ru.chernyshev.recognizer.repository.AdsDirectRepository;
+import ru.chernyshev.recognizer.repository.AdsSendedRepository;
 import ru.chernyshev.recognizer.repository.AdsRepository;
 import ru.chernyshev.recognizer.repository.ChatRepository;
 
@@ -51,7 +51,7 @@ public class AdsSenderTest {
     @Autowired
     AdsRepository adsRepository;
     @Autowired
-    AdsDirectRepository adsDirectRepository;
+    AdsSendedRepository adsDirectRepository;
     @Autowired
     ChatRepository chatRepository;
 
@@ -68,12 +68,12 @@ public class AdsSenderTest {
         RecognizerBotService recognizerBotService;
 
         @Bean
-        public AdsService adsService(AdsRepository adsRepository, AdsDirectRepository adsDirectRepository) {
+        public AdsService adsService(AdsRepository adsRepository, AdsSendedRepository adsDirectRepository) {
             return new AdsService(adsRepository, adsDirectRepository);
         }
 
         @Bean
-        public AdsSenderService adsSenderService(AdsDirectRepository adsDirectRepository, AdsService adsService, ChatRepository chatRepository) {
+        public AdsSenderService adsSenderService(AdsSendedRepository adsDirectRepository, AdsService adsService, ChatRepository chatRepository) {
             return new AdsSenderService(recognizerBotService, adsService, chatRepository, batchSize, maxMessagePerSecond);
         }
     }

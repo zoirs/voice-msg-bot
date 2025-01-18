@@ -1,0 +1,41 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.13.0">
+
+        <createSequence sequenceName="seq_ads_in_msg_shown"/>
+
+        <sql>
+            CREATE TABLE ads_in_msg
+            (
+            id bigint NOT NULL,
+            day date NOT NULL,
+            text character varying NOT NULL,
+            percent bigint NOT NULL,
+            PRIMARY KEY (id),
+            CONSTRAINT day_unique UNIQUE (day)
+            );
+
+            CREATE TABLE ads_in_msg_shown
+            (
+            id bigint NOT NULL,
+            ads_in_msg_id bigint NOT NULL,
+            chat_id bigint,
+            message_id bigint,
+            PRIMARY KEY (id),
+            CONSTRAINT ads_in_msg_shown_ads_id_fk FOREIGN KEY (ads_in_msg_id)
+            REFERENCES ads_in_msg (id) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION
+            NOT VALID
+            );
+
+            INSERT INTO ads_in_msg(
+            id, day, text, percent)
+            VALUES (-1, '0001-01-01', '[Канал](https://t.me/chernyshev_ru) разработчика бота', 10);
+       </sql>
+
+    </changeSet>
+</databaseChangeLog>

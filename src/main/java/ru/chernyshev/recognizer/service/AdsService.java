@@ -11,7 +11,7 @@ import ru.chernyshev.recognizer.entity.AdsSended;
 import ru.chernyshev.recognizer.entity.AdsEntity;
 import ru.chernyshev.recognizer.model.AdsButton;
 import ru.chernyshev.recognizer.model.AdsType;
-import ru.chernyshev.recognizer.repository.AdsDirectRepository;
+import ru.chernyshev.recognizer.repository.AdsSendedRepository;
 import ru.chernyshev.recognizer.repository.AdsRepository;
 
 import java.time.LocalDateTime;
@@ -25,12 +25,12 @@ public class AdsService {
     private static final Logger logger = LoggerFactory.getLogger(AdsService.class);
 
     private final AdsRepository adsRepository;
-    private final AdsDirectRepository adsDirectRepository;
+    private final AdsSendedRepository adsDirectRepository;
 
     private AdsButton adsButton;
 
     @Autowired
-    public AdsService(AdsRepository adsRepository, AdsDirectRepository adsDirectRepository) {
+    public AdsService(AdsRepository adsRepository, AdsSendedRepository adsDirectRepository) {
         this.adsRepository = adsRepository;
         this.adsDirectRepository = adsDirectRepository;
     }
