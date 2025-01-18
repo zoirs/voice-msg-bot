@@ -48,3 +48,7 @@ base.witat.auth=
 base.witat.url=
 extra.witat.auth=
 extra.witat.url=
+
+botads.token=
+botads.username=
+botads.img.path=

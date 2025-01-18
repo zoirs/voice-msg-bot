@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+import ru.chernyshev.recognizer.service.AdsRequestBotService;
 import ru.chernyshev.recognizer.service.RecognizerBotService;
 
 @ConditionalOnProperty(value = "app.scheduling.enable", havingValue = "true", matchIfMissing = true)
@@ -33,10 +34,11 @@ public class RecognizerApplication {
     }
 
     @Bean
-    TelegramBotsApi telegramBotsApi(RecognizerBotService recognizerBotService) throws TelegramApiException {
+    TelegramBotsApi telegramBotsApi(RecognizerBotService recognizerBotService, AdsRequestBotService adsRequestBotService) throws TelegramApiException {
         logger.info("Start bot init");
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         telegramBotsApi.registerBot(recognizerBotService);
+        telegramBotsApi.registerBot(adsRequestBotService);
         logger.info("Bot registered");
         return telegramBotsApi;
     }

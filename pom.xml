@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>ru.chernyshev</groupId>
 	<artifactId>yandex-speechkit</artifactId>
-	<version>0.19.0</version>
+	<version>1.0.0</version>
 	<name>yandex-speechkit</name>
 	<description>Speech bot</description>
 

@@ -20,10 +20,10 @@ import java.time.LocalTime;
 public class ChatService {
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
-    private static final String USERCHATTYPE = "private";
-    private static final String GROUPCHATTYPE = "group";
-    private static final String CHANNELCHATTYPE = "channel";
-    private static final String SUPERGROUPCHATTYPE = "supergroup";
+    public static final String USERCHATTYPE = "private";
+    public static final String GROUPCHATTYPE = "group";
+    public static final String CHANNELCHATTYPE = "channel";
+    public static final String SUPERGROUPCHATTYPE = "supergroup";
 
     private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;

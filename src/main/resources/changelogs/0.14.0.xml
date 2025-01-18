@@ -1,0 +1,30 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="Denis" id="0.14.0">
+
+        <createSequence sequenceName="seq_chats_ads_request"/>
+
+        <sql>
+            CREATE TABLE IF NOT EXISTS chats_ads_request
+            (
+            id bigint NOT NULL,
+            created timestamp(6) without time zone NOT NULL,
+            updated timestamp(6) without time zone NOT NULL,
+            telegram_id bigint NOT NULL,
+            user_name character varying(255),
+            state character varying(255) NOT NULL,
+            first_name character varying(255),
+            last_name character varying(255),
+            group_type character varying(255),
+            group_name character varying(1024),
+            removed boolean DEFAULT false,
+            CONSTRAINT chats_ads_request_users_pkey PRIMARY KEY (id),
+            CONSTRAINT chats_ads_request_telegram_id_unique UNIQUE (telegram_id)
+            );
+       </sql>
+
+    </changeSet>
+</databaseChangeLog>
