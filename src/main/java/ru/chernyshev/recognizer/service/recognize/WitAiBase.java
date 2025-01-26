@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.RecognizeResult;
+import ru.chernyshev.recognizer.dto.Segment;
 import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.service.MessageValidator;
 import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
@@ -62,8 +63,14 @@ public abstract class WitAiBase implements Recognizer {
 
     @Override
     public String recognize(File fileVoice, MessageType type, Function<RecognizeResult, Boolean> progressCallback) {
+//        FfmpegCommandBuilder builder2 = new FfmpegCommandBuilder(ffmpeg, fileVoice.getAbsolutePath());
+//        File file1 = builder2.noiseFixNeuro();
         FfmpegCommandBuilder builder = new FfmpegCommandBuilder(ffmpeg, fileVoice.getAbsolutePath());
         int volume = builder.getVolume();
+//        List<Segment> silencedetect = builder.silencedetect(volume);
+
+//        File file2 = builder.cutSegment(silencedetect);
+
         if (type == MessageType.VOICE) {
             builder.withAudioSettings(volume);
         }
@@ -71,80 +78,103 @@ public abstract class WitAiBase implements Recognizer {
             builder.withVideoNoteSettings(volume);
         }
 
-        File file = builder.execute();
-        if (file == null || !file.exists()) {
+        File fileWithoutSilent = builder.execute();
+
+        if (fileWithoutSilent == null || !fileWithoutSilent.exists()) {
             logger.error("Ffmpeg cant process file");
             return null;
         }
 
-        byte[] bytes;
-        try {
-            bytes = FileUtils.readFileToByteArray(file);
-        } catch (IOException e) {
-            logger.error("Cant read file " + file, e);
-            return null;
-        } finally {
-            deleteFile(file);
-        }
+        FfmpegCommandBuilder builder1 = new FfmpegCommandBuilder(ffmpeg, fileWithoutSilent.getAbsolutePath());
+        List<String> files = builder1.cutParam(fileWithoutSilent.getName());
+        deleteFile(fileWithoutSilent);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0, filesSize = files.size(); i < filesSize; i++) {
+            String filePath = files.get(i);
 
-        for (WitSettings setting : settings) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(setting.getAuth());
-            headers.set("Content-Type", "audio/ogg");
-            headers.set("Transfer-encoding", "chunked");
-            if (!rateLimiter.tryAcquire()) {
-                logger.warn("Rate too much {}", rateLimiter.getRate());
-                MessageValidator.sleep();
-            }
-            countOfUse++;
+            File file = new File(filePath);
+            byte[] bytes;
             try {
-                RequestCallback requestCallback = request -> {
-                    request.getHeaders().addAll(headers);
-                    request.getBody().write(bytes);
-                };
-                return restTemplate.execute(URI.create(setting.getUrl()), HttpMethod.POST, requestCallback, clientHttpResponse -> {
-                    try (InputStream inputStream = new BufferedInputStream(clientHttpResponse.getBody())) {
-                        String lastText = "";
-                        long lastExecutionTime = 0L;
-                        JsonParser jp = jsonFactory.createParser(inputStream);
-                        jp.setCodec(objectMapper);
-                        jp.nextToken();
-                        while (jp.currentToken() != null) {
-                            if (jp.currentToken() == JsonToken.START_OBJECT) {
-                                JsonNode node = jp.readValueAsTree();
-                                String currentText = node.has("text") ? node.get("text").asText() : null;
-                                if (!StringUtils.isEmpty(currentText)) {
-                                    if (node.has("is_final") && node.get("is_final").asBoolean()) {
-                                        return currentText;
-                                    } else if (!currentText.equals(lastText) && node.has("speech")) {
-                                        lastText = currentText;
-                                        long currentTime = System.currentTimeMillis();
-                                        if (currentTime - lastExecutionTime >= MIN_UPDATE_INTERVAL) {
-                                            Boolean result = progressCallback.apply(new RecognizeResult(currentText + " ⏳", null));
-                                            if (!result) {
-                                                return MessageValidator.SKIP;
+                bytes = FileUtils.readFileToByteArray(file);
+            } catch (IOException e) {
+                logger.error("Cant read file " + file, e);
+                return null;
+            } finally {
+                deleteFile(file);
+            }
+
+            for (WitSettings setting : settings) {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBearerAuth(setting.getAuth());
+                headers.set("Content-Type", "audio/ogg");
+                headers.set("Transfer-encoding", "chunked");
+                if (!rateLimiter.tryAcquire()) {
+                    logger.warn("Rate too much {}", rateLimiter.getRate());
+                    MessageValidator.sleep();
+                }
+                countOfUse++;
+                try {
+                    RequestCallback requestCallback = request -> {
+                        request.getHeaders().addAll(headers);
+                        request.getBody().write(bytes);
+                    };
+                    int finalI = i;
+                    String execute = restTemplate.execute(URI.create(setting.getUrl()), HttpMethod.POST, requestCallback, clientHttpResponse -> {
+                        try (InputStream inputStream = new BufferedInputStream(clientHttpResponse.getBody())) {
+                            String lastText = "";
+                            long lastExecutionTime = 0L;
+                            JsonParser jp = jsonFactory.createParser(inputStream);
+                            jp.setCodec(objectMapper);
+                            jp.nextToken();
+                            while (jp.currentToken() != null) {
+                                if (jp.currentToken() == JsonToken.START_OBJECT) {
+                                    JsonNode node = jp.readValueAsTree();
+                                    String currentText = node.has("text") ? node.get("text").asText() : null;
+                                    if (!StringUtils.isEmpty(currentText)) {
+                                        if (node.has("is_final") && node.get("is_final").asBoolean()) {
+                                            logger.info(finalI + " " + currentText);
+                                            return currentText;
+                                        } else if (!currentText.equals(lastText) && node.has("speech")) {
+                                            lastText = currentText;
+                                            long currentTime = System.currentTimeMillis();
+                                            if (currentTime - lastExecutionTime >= MIN_UPDATE_INTERVAL) {
+                                                String updateMsg = stringBuilder.length() == 0 ? currentText : stringBuilder + " " + uncapitalize(currentText);
+                                                Boolean result = progressCallback.apply(new RecognizeResult(updateMsg + " ⏳", null));
+                                                if (!result) {
+                                                    return MessageValidator.SKIP;
+                                                }
+                                                lastExecutionTime = currentTime;
                                             }
-                                            lastExecutionTime = currentTime;
                                         }
+                                    }
+
+                                    if (node.has("code")) {
+                                        logger.error("Recognize {} symbols and got error: {}", lastText.length(), node);
+                                        return StringUtils.isEmpty(lastText) ? lastText : (lastText + "... \n/_расшифрованно не полностью_/");
                                     }
                                 }
 
-                                if (node.has("code")) {
-                                    logger.error("Recognize {} symbols and got error: {}", lastText.length(), node);
-                                    return StringUtils.isEmpty(lastText) ? lastText : (lastText + "... \n/_расшифрованно не полностью_/");
-                                }
+                                jp.nextToken();
                             }
-
-                            jp.nextToken();
+                            return lastText;
                         }
-                        return lastText;
-                    }
-                });
-            } catch (Exception e) {
-                logger.error("Cant send request to wit ai [" + setting.getName() + "] ", e);
+                    });
+                    stringBuilder
+                            .append(stringBuilder.length() == 0 ? execute : uncapitalize(execute))
+                            .append(" ");
+                } catch (Exception e) {
+                    logger.error("Cant send request to wit ai [" + setting.getName() + "] ", e);
+                }
             }
         }
-        return null;
+        return stringBuilder.toString();
+    }
+
+    public static String uncapitalize(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toLowerCase() + str.substring(1);
     }
 
     private void deleteFile(File voiceFile) {
