@@ -171,7 +171,7 @@ public abstract class WitAiBase implements Recognizer {
                     });
                     stringBuilder
                             .append(stringBuilder.length() == 0 ? execute : uncapitalize(execute))
-                            .append(" ");
+                            .append(stringBuilder.length() == 0 ? "" : " ");
                 } catch (Exception e) {
                     logger.error("Cant send request to wit ai [" + setting.getName() + "] ", e);
                 }
