@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.RateLimiter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -16,7 +17,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 import ru.chernyshev.recognizer.RecognizeResult;
-import ru.chernyshev.recognizer.dto.Segment;
 import ru.chernyshev.recognizer.model.MessageType;
 import ru.chernyshev.recognizer.service.MessageValidator;
 import ru.chernyshev.recognizer.utils.FfmpegCommandBuilder;
@@ -45,6 +45,7 @@ public abstract class WitAiBase implements Recognizer {
     private final RateLimiter rateLimiter;
 
     private int countOfUse;
+    public boolean isForLongOnly;
 
     public WitAiBase(String ffmpeg,
                      List<String> configs,
@@ -55,9 +56,15 @@ public abstract class WitAiBase implements Recognizer {
         this.rateLimiter = RateLimiter.create(1);
         this.ffmpeg = ffmpeg;
         this.settings = configs.stream()
-                .map(q -> new WitSettings(q, env.getProperty(q + ".witat.url"), env.getProperty(q + ".witat.auth")))
+                .map(q -> {
+                    String maxSecProp = env.getProperty(q + ".witat.maxSeconds");
+                    int maxSeconds = StringUtils.isEmpty(maxSecProp) ? 0 : Integer.parseInt(maxSecProp);
+                    return new WitSettings(q, env.getProperty(q + ".witat.url"), env.getProperty(q + ".witat.auth"), maxSeconds);
+                })
                 .collect(Collectors.toList());
         this.restTemplate = restTemplate;
+        Preconditions.checkArgument(this.settings.size() == 1, "More than one settings " + settings.stream().map(WitSettings::toString).collect(Collectors.joining()));
+        isForLongOnly = settings.get(0).getMaxSeconds() > 41;
     }
 
 
@@ -87,6 +94,9 @@ public abstract class WitAiBase implements Recognizer {
 
         FfmpegCommandBuilder builder1 = new FfmpegCommandBuilder(ffmpeg, fileWithoutSilent.getAbsolutePath());
         List<String> files = builder1.cutParam(fileWithoutSilent.getName());
+        if (files.size() > 1) {
+            logger.info("Cut for {} files", files.size());
+        }
         deleteFile(fileWithoutSilent);
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0, filesSize = files.size(); i < filesSize; i++) {
@@ -109,7 +119,7 @@ public abstract class WitAiBase implements Recognizer {
                 headers.set("Content-Type", "audio/ogg");
                 headers.set("Transfer-encoding", "chunked");
                 if (!rateLimiter.tryAcquire()) {
-                    logger.warn("Rate too much {}", rateLimiter.getRate());
+                    logger.warn("Rate too much {} (count {})", rateLimiter.getRate(), countOfUse);
                     MessageValidator.sleep();
                 }
                 countOfUse++;
@@ -132,7 +142,7 @@ public abstract class WitAiBase implements Recognizer {
                                     String currentText = node.has("text") ? node.get("text").asText() : null;
                                     if (!StringUtils.isEmpty(currentText)) {
                                         if (node.has("is_final") && node.get("is_final").asBoolean()) {
-                                            logger.info(finalI + " " + currentText);
+//                                            logger.info(finalI + " " + currentText);
                                             return currentText;
                                         } else if (!currentText.equals(lastText) && node.has("speech")) {
                                             lastText = currentText;
@@ -187,7 +197,10 @@ public abstract class WitAiBase implements Recognizer {
 
     @Override
     public boolean isApplicable(int duration) {
-        return duration < MessageValidator.MAX_SECONDS;
+        if (isForLongOnly && duration < 40) {
+            return false;
+        }
+        return duration < settings.get(0).getMaxSeconds();
     }
 
     public int priority() {

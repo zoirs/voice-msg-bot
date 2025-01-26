@@ -118,7 +118,8 @@ public class RecognizerBotService extends TelegramLongPollingBot {
         }
 
         MessageType type = MessageService.getType(receivedMsg);
-        logger.info("Message {} in chat {} has {} (duration {}, size {})", receivedMsg.getMessageId(), receivedMsg.getChatId(), type, MessageService.getDuration(receivedMsg), MessageService.getFileSize(receivedMsg));//байт , sec
+        Integer duration = MessageService.getDuration(receivedMsg);
+        logger.info("Message {} in chat {} has {} (duration {}, size {})", receivedMsg.getMessageId(), receivedMsg.getChatId(), type, duration, MessageService.getFileSize(receivedMsg));//байт , sec
 
         MessageEntity messageEntity = messageService.create(receivedMsg);
 
@@ -138,7 +139,7 @@ public class RecognizerBotService extends TelegramLongPollingBot {
             return;
         }
 
-        List<Recognizer> recognizers = recognizeFactory.create(MessageService.getDuration(receivedMsg), type);
+        List<Recognizer> recognizers = recognizeFactory.create(duration, type);
 
         CompletableFuture
                 .supplyAsync(() -> executeFile(fileId), service)

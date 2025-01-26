@@ -177,7 +177,7 @@ public class FfmpegCommandBuilder {
             List<String> createdFiles = new ArrayList<>();
 
             while ((line = errorReader.readLine()) != null) {
-                logger.info(line);
+//                logger.info(line);
 //                lines.add(line);
 //                if (line.contains("mean_volume")) {
 //                    return parse(line);
