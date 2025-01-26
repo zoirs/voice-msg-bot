@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public abstract class WitAiBase implements Recognizer {
 
     private static final Logger logger = LoggerFactory.getLogger(WitAiBase.class);
-    private static final int MIN_UPDATE_INTERVAL = 500;
+    private static final int MIN_UPDATE_INTERVAL = 1000;
 
     private final String ffmpeg;
     private final RestTemplate restTemplate;

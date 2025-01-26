@@ -159,7 +159,7 @@ public class FfmpegCommandBuilder {
 
     public List<String> cutParam(String name) {
         try {
-            String outputFilePattern = tmpDir + name + "_%03d.ogg";
+            String outputFilePattern = tmpDir + File.separator + name + "_%03d.ogg";
 
 // ./ffmpeg.exe -i ../../testFiles/file30.tmp -f segment -segment_time 5 output_%03d.ogg
             ProcessBuilder processBuilder = new ProcessBuilder(ffmpegPath,
