@@ -46,8 +46,10 @@ ads.direct.max.count.per.second=
 witat=base,extra
 base.witat.auth=
 base.witat.url=
+base.witat.maxSeconds=
 extra.witat.auth=
 extra.witat.url=
+extra.witat.maxSeconds=
 
 botads.token=
 botads.username=
